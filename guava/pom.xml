@@ -88,9 +88,9 @@
       <artifactId>jdk8</artifactId>
       <version>2.7.0</version>
     </dependency>
-    <!-- We add errorprone here instead of using annotationProcessorPaths as its documentation suggests -->
-    <!-- because if that option is used, classpath won't be searched for annotation processors, -->
-    <!-- and then the processors in the local checker-framework can't be loaded -->
+    <!-- Add errorprone here instead of using annotationProcessorPaths (as its documentation suggests) -->
+    <!-- because if that option is used, the classpath won't be searched for annotation processors, -->
+    <!-- and then the processors in the local Checker Framework installation can't be loaded. -->
     <dependency>
       <groupId>com.google.errorprone</groupId>
       <artifactId>error_prone_core</artifactId>
