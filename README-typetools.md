@@ -33,13 +33,37 @@ The Maven properties in guava/pom.xml can be used to change the behavior:
 - `index.only.arg` defines additional argument passed to the Index Checker, for example `-Ashowchecks`.
 
 
+Typechecking against the master branch of the Checker Framework
+---------------------------------------------------------------
+
+The released version of the Checker Framework may be incompatible with the
+development version in the GitHub repository
+https://github.com/typetools/checker-framework/tree/master .  For example,
+the GitHub version may have renamed or added annotations or error messages.
+
+When a pull request depends on forthcoming Checker Framework features, make
+pull requests against a branch named `cf-master`.  Its Travis job uses the
+Checker Framework from GitHub, rather than a Checker Framework release.
+
+To create the `cf-master` branch if it does not exist:
+It should differ only in file `.travis.yml`, which should pass
+```
+  "-P checkerframework-local"
+```
+(with the quotes) to `./.travis-build.sh`.
+
+Whenever a Checker Framework release is made, undo the change in
+`.travis.yml`, pull-request the `cf-master` branch into `master`, and
+delete the `cf-master` branch.
+
+
 To update to a newer version of the upstream library
 ----------------------------------------------------
 
 Pull in the latest Guava version; for example:
 ```
 git fetch --tags https://github.com/google/guava
-git pull https://github.com/google/guava v26.0
+git pull https://github.com/google/guava v28.0
 ```
 
 Use the latest Checker Framework version by changing `pom.xml` and `guava/pom.xml`.
@@ -50,11 +74,12 @@ To upload to Maven Central
 
 This must be done on a CSE machine, which has access to the necessary passwords.
 
-# Ensure the version number is set properly in file guava/cfMavenCentral.xml.
-# Then, set this variable to the same version.
+# Update the version number
+#  * here, and
+#  * in file guava/cfMavenCentral.xml.
 # If it's not the same as the upstream version, then also edit pom.xml and guava/pom.xml.
 
-PACKAGE=guava-27.1-jre
+PACKAGE=guava-28.0-jre
 
 cd guava
 
