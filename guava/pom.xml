@@ -129,8 +129,6 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
             <fork>true</fork>
-            <source>1.8</source>
-            <target>1.8</target>
             <compilerArguments>
               <Xmaxerrs>10000</Xmaxerrs>
               <Xmaxwarns>10000</Xmaxwarns>
@@ -331,7 +329,8 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
-              <fork>true</fork>
+              <source>1.8</source>
+              <target>1.8</target>
               <compilerArgs combine.children="append">
                 <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
                 <arg>-Xbootclasspath/p:${annotatedJdk8}</arg>
