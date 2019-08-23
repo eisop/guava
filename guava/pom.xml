@@ -132,10 +132,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-<<<<<<< HEAD
-=======
         <version>3.6.1</version>
->>>>>>> 6bd42d8558a8f7274a988c3bf5b59249e8b20f36
         <configuration>
             <fork>true</fork>
             <compilerArguments>
