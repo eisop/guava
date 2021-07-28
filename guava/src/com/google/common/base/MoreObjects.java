@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Arrays;
+import java.util.logging.Logger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -47,6 +48,9 @@ public final class MoreObjects {
    * accomplished with {@link Optional#or(Object) first.or(second)}. That approach also allows for
    * lazy evaluation of the fallback instance, using {@link Optional#or(Supplier)
    * first.or(supplier)}.
+   *
+   * <p><b>Java 9 users:</b> use {@code java.util.Objects.requireNonNullElse(first, second)}
+   * instead.
    *
    * @return {@code first} if it is non-null; otherwise {@code second} if it is non-null
    * @throws NullPointerException if both {@code first} and {@code second} are null

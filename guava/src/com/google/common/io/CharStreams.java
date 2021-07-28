@@ -28,6 +28,10 @@ import java.io.Writer;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import org.checkerframework.checker.index.qual.IndexOrHigh;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Provides utility methods for working with character streams.
@@ -76,19 +80,19 @@ public final class CharStreams {
       } else {
         return copyReaderToWriter((Reader) from, asWriter(to));
       }
-    } else {
-      checkNotNull(from);
-      checkNotNull(to);
-      long total = 0;
-      CharBuffer buf = createBuffer();
-      while (from.read(buf) != -1) {
-        buf.flip();
-        to.append(buf);
-        total += buf.remaining();
-        buf.clear();
-      }
-      return total;
     }
+
+    checkNotNull(from);
+    checkNotNull(to);
+    long total = 0;
+    CharBuffer buf = createBuffer();
+    while (from.read(buf) != -1) {
+      Java8Compatibility.flip(buf);
+      to.append(buf);
+      total += buf.remaining();
+      Java8Compatibility.clear(buf);
+    }
+    return total;
   }
 
   // TODO(lukes): consider allowing callers to pass in a buffer to use, some callers would be able
@@ -242,7 +246,7 @@ public final class CharStreams {
     CharBuffer buf = createBuffer();
     while ((read = readable.read(buf)) != -1) {
       total += read;
-      buf.clear();
+      Java8Compatibility.clear(buf);
     }
     return total;
   }
@@ -291,7 +295,7 @@ public final class CharStreams {
     }
 
     @Override
-    public void write(char[] cbuf, int off, int len) {
+    public void write(char[] cbuf, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
       checkPositionIndexes(off, off + len, cbuf.length);
     }
 
@@ -301,19 +305,18 @@ public final class CharStreams {
     }
 
     @Override
-    public void write(String str, int off, int len) {
+    public void write(String str, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
       checkPositionIndexes(off, off + len, str.length());
     }
 
     @Override
-    public Writer append(CharSequence csq) {
-      checkNotNull(csq);
+    public Writer append(@Nullable CharSequence csq) {
       return this;
     }
 
     @Override
-    public Writer append(CharSequence csq, int start, int end) {
-      checkPositionIndexes(start, end, csq.length());
+    public Writer append(@Nullable CharSequence csq, @IndexOrHigh("#1") int start, @IndexOrHigh("#1") int end) {
+      checkPositionIndexes(start, end, csq == null ? "null".length() : csq.length());
       return this;
     }
 

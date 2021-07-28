@@ -28,7 +28,11 @@ import java.util.zip.Adler32;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 import javax.crypto.spec.SecretKeySpec;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.IntRange;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * Static methods to obtain {@link HashFunction} instances, and other static hashing-related
@@ -61,7 +65,7 @@ public final class Hashing {
    * @return a hash function, described above, that produces hash codes of length {@code
    *     minimumBits} or greater
    */
-  public static HashFunction goodFastHash(int minimumBits) {
+  public static HashFunction goodFastHash(@Positive int minimumBits) {
     int bits = checkPositiveAndMakeMultipleOf32(minimumBits);
 
     if (bits == 32) {
@@ -234,7 +238,6 @@ public final class Hashing {
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * MD5 (128 hash bits) hash function and the given secret key.
    *
-   *
    * @param key the secret key
    * @throws IllegalArgumentException if the given key is inappropriate for initializing this MAC
    * @since 20.0
@@ -248,7 +251,6 @@ public final class Hashing {
    * MD5 (128 hash bits) hash function and a {@link SecretKeySpec} created from the given byte array
    * and the MD5 algorithm.
    *
-   *
    * @param key the key material of the secret key
    * @since 20.0
    */
@@ -259,7 +261,6 @@ public final class Hashing {
   /**
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * SHA-1 (160 hash bits) hash function and the given secret key.
-   *
    *
    * @param key the secret key
    * @throws IllegalArgumentException if the given key is inappropriate for initializing this MAC
@@ -274,7 +275,6 @@ public final class Hashing {
    * SHA-1 (160 hash bits) hash function and a {@link SecretKeySpec} created from the given byte
    * array and the SHA-1 algorithm.
    *
-   *
    * @param key the key material of the secret key
    * @since 20.0
    */
@@ -285,7 +285,6 @@ public final class Hashing {
   /**
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * SHA-256 (256 hash bits) hash function and the given secret key.
-   *
    *
    * @param key the secret key
    * @throws IllegalArgumentException if the given key is inappropriate for initializing this MAC
@@ -300,7 +299,6 @@ public final class Hashing {
    * SHA-256 (256 hash bits) hash function and a {@link SecretKeySpec} created from the given byte
    * array and the SHA-256 algorithm.
    *
-   *
    * @param key the key material of the secret key
    * @since 20.0
    */
@@ -311,7 +309,6 @@ public final class Hashing {
   /**
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * SHA-512 (512 hash bits) hash function and the given secret key.
-   *
    *
    * @param key the secret key
    * @throws IllegalArgumentException if the given key is inappropriate for initializing this MAC
@@ -325,7 +322,6 @@ public final class Hashing {
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * SHA-512 (512 hash bits) hash function and a {@link SecretKeySpec} created from the given byte
    * array and the SHA-512 algorithm.
-   *
    *
    * @param key the key material of the secret key
    * @since 20.0
@@ -457,7 +453,6 @@ public final class Hashing {
    *       traffic to {@code charlie}, rather than letting {@code bravo} keep its traffic.
    * </ul>
    *
-   *
    * <p>See the <a href="http://en.wikipedia.org/wiki/Consistent_hashing">Wikipedia article on
    * consistent hashing</a> for more information.
    */
@@ -492,7 +487,6 @@ public final class Hashing {
    *       traffic to {@code charlie}, rather than letting {@code bravo} keep its traffic.
    * </ul>
    *
-   *
    * <p>See the <a href="http://en.wikipedia.org/wiki/Consistent_hashing">Wikipedia article on
    * consistent hashing</a> for more information.
    */
@@ -522,6 +516,8 @@ public final class Hashing {
    * @throws IllegalArgumentException if {@code hashCodes} is empty, or the hash codes do not all
    *     have the same bit length
    */
+  @SuppressWarnings("value:argument.type.incompatible")// `hashCode.asBytes()` return an array with min length of 1.
+  //Since nextBytes.length is checked to have same bit length with resultBytes.length, resultBytes also needs min length of 1.
   public static HashCode combineOrdered(Iterable<HashCode> hashCodes) {
     Iterator<HashCode> iterator = hashCodes.iterator();
     checkArgument(iterator.hasNext(), "Must be at least 1 hash code to combine.");
@@ -535,7 +531,7 @@ public final class Hashing {
         resultBytes[i] = (byte) (resultBytes[i] * 37 ^ nextBytes[i]);
       }
     }
-    return HashCode.fromBytesNoCopy(resultBytes);
+    return HashCode.fromBytesNoCopy(resultBytes);//(1)
   }
 
   /**
@@ -547,6 +543,8 @@ public final class Hashing {
    * @throws IllegalArgumentException if {@code hashCodes} is empty, or the hash codes do not all
    *     have the same bit length
    */
+  @SuppressWarnings("value:argument.type.incompatible")// `hashCode.asBytes()` return an array with min length of 1.
+  //Since nextBytes.length is checked to have same bit length with resultBytes.length, resultBytes also needs min length of 1.
   public static HashCode combineUnordered(Iterable<HashCode> hashCodes) {
     Iterator<HashCode> iterator = hashCodes.iterator();
     checkArgument(iterator.hasNext(), "Must be at least 1 hash code to combine.");
@@ -563,7 +561,7 @@ public final class Hashing {
   }
 
   /** Checks that the passed argument is positive, and ceils it to a multiple of 32. */
-  static int checkPositiveAndMakeMultipleOf32(int bits) {
+  static @IntRange(from=32) int checkPositiveAndMakeMultipleOf32(int bits) {
     checkArgument(bits > 0, "Number of bits must be positive");
     return (bits + 31) & ~31;
   }
@@ -634,7 +632,7 @@ public final class Hashing {
     }
 
     @Override
-    public int bits() {
+    public @NonNegative int bits() {
       int bitSum = 0;
       for (HashFunction function : functions) {
         bitSum += function.bits();

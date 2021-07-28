@@ -18,13 +18,19 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedInts;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Serializable;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.SameLen;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.ArrayLenRange;
+import org.checkerframework.common.value.qual.IntRange;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * An immutable hash code of arbitrary bit length.
@@ -33,12 +39,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Kurt Alfred Kluever
  * @since 11.0
  */
-@Beta
 public abstract class HashCode {
   HashCode() {}
 
   /** Returns the number of bits in this hash code; a positive multiple of 8. */
-  public abstract int bits();
+  public abstract @NonNegative int bits();
 
   /**
    * Returns the first four bytes of {@linkplain #asBytes() this hashcode's bytes}, converted to an
@@ -71,7 +76,7 @@ public abstract class HashCode {
    * returned by this method.
    */
   // TODO(user): consider ByteString here, when that is available
-  public abstract byte[] asBytes();
+  public abstract byte @MinLen(1)[] asBytes();
 
   /**
    * Copies bytes from this hash code into {@code dest}.
@@ -82,22 +87,27 @@ public abstract class HashCode {
    * @return the number of bytes written to {@code dest}
    * @throws IndexOutOfBoundsException if there is not enough room in {@code dest}
    */
+  @SuppressWarnings({"lowerbound:assignment.type.incompatible",// Since bits() return non negative value, `bits() / 8`
+          //return non negative.
+          "upperbound:assignment.type.incompatible"//(1) maxLength is = `bits() / 8` if maxLength < bits() / 8.
+          //Since bits() returns a positive multiple of 8, `bits() / 8 + offset - 1` < dest.length
+          })
   @CanIgnoreReturnValue
-  public int writeBytesTo(byte[] dest, int offset, int maxLength) {
-    maxLength = Ints.min(maxLength, bits() / 8);
+  public int writeBytesTo(byte[] dest, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int maxLength) {
+    maxLength = Ints.min(maxLength, bits() / 8);//(1)
     Preconditions.checkPositionIndexes(offset, offset + maxLength, dest.length);
     writeBytesToImpl(dest, offset, maxLength);
     return maxLength;
   }
 
-  abstract void writeBytesToImpl(byte[] dest, int offset, int maxLength);
+  abstract void writeBytesToImpl(byte[] dest, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int maxLength);
 
   /**
    * Returns a mutable view of the underlying bytes for the given {@code HashCode} if it is a
    * byte-based hashcode. Otherwise it returns {@link HashCode#asBytes}. Do <i>not</i> mutate this
    * array or else you will break the immutability contract of {@code HashCode}.
    */
-  byte[] getBytesInternal() {
+  byte @MinLen(1)[] getBytesInternal() {
     return asBytes();
   }
 
@@ -125,13 +135,13 @@ public abstract class HashCode {
     }
 
     @Override
-    public int bits() {
+    public @NonNegative int bits() {
       return 32;
     }
 
     @Override
-    public byte[] asBytes() {
-      return new byte[] {(byte) hash, (byte) (hash >> 8), (byte) (hash >> 16), (byte) (hash >> 24)};
+    public byte @MinLen(1)[] asBytes() {
+      return new byte @MinLen(1)[] {(byte) hash, (byte) (hash >> 8), (byte) (hash >> 16), (byte) (hash >> 24)};
     }
 
     @Override
@@ -150,7 +160,7 @@ public abstract class HashCode {
     }
 
     @Override
-    void writeBytesToImpl(byte[] dest, int offset, int maxLength) {
+    void writeBytesToImpl(byte[] dest, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int maxLength) {
       for (int i = 0; i < maxLength; i++) {
         dest[offset + i] = (byte) (hash >> (i * 8));
       }
@@ -182,13 +192,13 @@ public abstract class HashCode {
     }
 
     @Override
-    public int bits() {
+    public @NonNegative int bits() {
       return 64;
     }
 
     @Override
-    public byte[] asBytes() {
-      return new byte[] {
+    public byte @MinLen(1)[] asBytes() {
+      return new byte @MinLen(1)[] {
         (byte) hash,
         (byte) (hash >> 8),
         (byte) (hash >> 16),
@@ -216,7 +226,7 @@ public abstract class HashCode {
     }
 
     @Override
-    void writeBytesToImpl(byte[] dest, int offset, int maxLength) {
+    void writeBytesToImpl(byte[] dest, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int maxLength) {
       for (int i = 0; i < maxLength; i++) {
         dest[offset + i] = (byte) (hash >> (i * 8));
       }
@@ -236,7 +246,7 @@ public abstract class HashCode {
    *
    * @since 15.0 (since 12.0 in HashCodes)
    */
-  public static HashCode fromBytes(byte[] bytes) {
+  public static HashCode fromBytes(byte @MinLen(1)[] bytes) {
     checkArgument(bytes.length >= 1, "A HashCode must contain at least 1 byte.");
     return fromBytesNoCopy(bytes.clone());
   }
@@ -245,28 +255,29 @@ public abstract class HashCode {
    * Creates a {@code HashCode} from a byte array. The array is <i>not</i> copied defensively, so it
    * must be handed-off so as to preserve the immutability contract of {@code HashCode}.
    */
-  static HashCode fromBytesNoCopy(byte[] bytes) {
+  static HashCode fromBytesNoCopy(byte @MinLen(1)[] bytes) {
     return new BytesHashCode(bytes);
   }
 
   private static final class BytesHashCode extends HashCode implements Serializable {
-    final byte[] bytes;
+    final byte @MinLen(1)[] bytes;
 
-    BytesHashCode(byte[] bytes) {
+    BytesHashCode(byte @MinLen(1)[] bytes) {
       this.bytes = checkNotNull(bytes);
     }
 
     @Override
-    public int bits() {
+    public @NonNegative int bits() {
       return bytes.length * 8;
     }
 
     @Override
-    public byte[] asBytes() {
+    public byte @MinLen(1)[] asBytes() {
       return bytes.clone();
     }
 
     @Override
+    @SuppressWarnings("upperbound:array.access.unsafe.high.constant")// `bytes.length` is checked to be >= 4 inside the function
     public int asInt() {
       checkState(
           bytes.length >= 4,
@@ -297,16 +308,18 @@ public abstract class HashCode {
     }
 
     @Override
-    void writeBytesToImpl(byte[] dest, int offset, int maxLength) {
+    void writeBytesToImpl(byte[] dest, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int maxLength) {
       System.arraycopy(bytes, 0, dest, offset, maxLength);
     }
 
     @Override
-    byte[] getBytesInternal() {
+    byte @MinLen(1)[] getBytesInternal() {
       return bytes;
     }
 
     @Override
+    @SuppressWarnings("upperbound:array.access.unsafe.high")/* Since `this.bytes.length` has same length as that.getBytesInternal().length
+    ( else return false), `i` range from 0 to `this.bytes.length` is safe as indexes.*/
     boolean equalsSameBits(HashCode that) {
       // We don't use MessageDigest.isEqual() here because its contract does not guarantee
       // constant-time evaluation (no short-circuiting).
@@ -334,6 +347,12 @@ public abstract class HashCode {
    *
    * @since 15.0
    */
+  @SuppressWarnings({"upperbound:argument.type.incompatible",/* (1): `string` min length is 2 and `string.length` must be a even number.
+  Since for loop increment by two each iteration, `i` is always < `string.length - 2` */
+          "upperbound:array.access.unsafe.high",/* Since `bytes.length = string.length / 2` and `i` is incremented by 2, range 0 - string.length()
+          `i / 2` is safe as indexes. */
+          "argument.type.incompatible"//(2) Since `string.length >= 2` and `bytes.length` init is `string.length / 2`, bytes has min length of 1.
+          })
   public static HashCode fromString(String string) {
     checkArgument(
         string.length() >= 2, "input string (%s) must have at least 2 characters", string);
@@ -341,14 +360,13 @@ public abstract class HashCode {
         string.length() % 2 == 0,
         "input string (%s) must have an even number of characters",
         string);
-
     byte[] bytes = new byte[string.length() / 2];
     for (int i = 0; i < string.length(); i += 2) {
       int ch1 = decode(string.charAt(i)) << 4;
-      int ch2 = decode(string.charAt(i + 1));
+      int ch2 = decode(string.charAt(i + 1));//(1)
       bytes[i / 2] = (byte) (ch1 + ch2);
     }
-    return fromBytesNoCopy(bytes);
+    return fromBytesNoCopy(bytes);//(2)
   }
 
   private static int decode(char ch) {
@@ -402,10 +420,10 @@ public abstract class HashCode {
    * Returns a string containing each byte of {@link #asBytes}, in order, as a two-digit unsigned
    * hexadecimal number in lower case.
    *
-   * <p>Note that if the output is considered to be a single hexadecimal number, this hash code's
-   * bytes are the <i>big-endian</i> representation of that number. This may be surprising since
-   * everything else in the hashing API uniformly treats multibyte values as little-endian. But this
-   * format conveniently matches that of utilities such as the UNIX {@code md5sum} command.
+   * <p>Note that if the output is considered to be a single hexadecimal number, whether this string
+   * is big-endian or little-endian depends on the byte order of {@link #asBytes}. This may be
+   * surprising for implementations of {@code HashCode} that represent the number in big-endian
+   * since everything else in the hashing API uniformly treats multibyte values as little-endian.
    *
    * <p>To create a {@code HashCode} from its string representation, see {@link #fromString}.
    */

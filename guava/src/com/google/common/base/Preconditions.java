@@ -15,9 +15,11 @@
 package com.google.common.base;
 
 import static com.google.common.base.Strings.lenientFormat;
+import static java.util.logging.Level.WARNING;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.logging.Logger;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -166,7 +168,7 @@ public final class Preconditions {
   public static void checkArgument(
       boolean expression,
       @Nullable String errorMessageTemplate,
-      Object @Nullable ... errorMessageArgs) {
+      @Nullable Object @Nullable ... errorMessageArgs) {
     if (!expression) {
       throw new IllegalArgumentException(lenientFormat(errorMessageTemplate, errorMessageArgs));
     }
@@ -948,7 +950,9 @@ public final class Preconditions {
   @CanIgnoreReturnValue
   @Pure
   public static <T extends @NonNull Object> T checkNotNull(
-      T reference, @Nullable String errorMessageTemplate, Object @Nullable ... errorMessageArgs) {
+      T reference,
+      @Nullable String errorMessageTemplate,
+      @Nullable Object @Nullable ... errorMessageArgs) {
     if (reference == null) {
       throw new NullPointerException(lenientFormat(errorMessageTemplate, errorMessageArgs));
     }
@@ -1461,7 +1465,7 @@ public final class Preconditions {
    * size}, inclusive.
    *
    * @param start a user-supplied index identifying a starting position in an array, list or string
-   * @param end a user-supplied index identifying a ending position in an array, list or string
+   * @param end a user-supplied index identifying an ending position in an array, list or string
    * @param size the size of that array, list or string
    * @throws IndexOutOfBoundsException if either index is negative or is greater than {@code size},
    *     or if {@code end} is less than {@code start}
@@ -1483,5 +1487,22 @@ public final class Preconditions {
     }
     // end < start
     return lenientFormat("end index (%s) must not be less than start index (%s)", end, start);
+  }
+
+  static {
+    try {
+      Java8Usage.performCheck();
+    } catch (Throwable underlying) {
+      Exception toLog =
+          new Exception(
+              "Guava will drop support for Java 7 in 2021. Please let us know if this will cause"
+                  + " you problems: https://github.com/google/guava/issues/5269",
+              underlying);
+      Logger.getLogger(Preconditions.class.getName())
+          .log(
+              WARNING,
+              "Java 7 compatibility warning: See https://github.com/google/guava/issues/5269",
+              toLog);
+    }
   }
 }

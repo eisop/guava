@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -67,10 +68,10 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  * present in the map to be reclaimed by the garbage collector. Entries with reclaimed keys or
  * values may be removed from the map on each map modification or on occasional map accesses; such
  * entries may be counted by {@link Map#size}, but will never be visible to read or write
- * operations. A partially-reclaimed entry is never exposed to the user. Any {@link java.util.Entry}
+ * operations. A partially-reclaimed entry is never exposed to the user. Any {@link Map.Entry}
  * instance retrieved from the map's {@linkplain Map#entrySet entry set} is a snapshot of that
  * entry's state at the time of retrieval; such entries do, however, support {@link
- * java.util.Entry#setValue}, which simply calls {@link Map#put} on the entry's key.
+ * Map.Entry#setValue}, which simply calls {@link Map#put} on the entry's key.
  *
  * <p>The maps produced by {@code MapMaker} are serializable, and the deserialized maps retain all
  * the configuration properties of the original map. During deserialization, if the original map had
@@ -100,10 +101,10 @@ public final class MapMaker {
   int initialCapacity = UNSET_INT;
   int concurrencyLevel = UNSET_INT;
 
-  @MonotonicNonNull Strength keyStrength;
-  @MonotonicNonNull Strength valueStrength;
+  @Nullable Strength keyStrength;
+  @Nullable Strength valueStrength;
 
-  @MonotonicNonNull Equivalence<Object> keyEquivalence;
+  @Nullable Equivalence<Object> keyEquivalence;
 
   /**
    * Constructs a new {@code MapMaker} instance with default settings, including strong keys, strong

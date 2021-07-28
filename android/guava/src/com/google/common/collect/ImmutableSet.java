@@ -318,7 +318,8 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
   public boolean equals(@NullableDecl Object object) {
     if (object == this) {
       return true;
-    } else if (object instanceof ImmutableSet
+    }
+    if (object instanceof ImmutableSet
         && isHashCodeFast()
         && ((ImmutableSet<?>) object).isHashCodeFast()
         && hashCode() != object.hashCode()) {
@@ -467,8 +468,8 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
      * @return this {@code Builder} object
      * @throws NullPointerException if {@code elements} is null or contains a null element
      */
-    @CanIgnoreReturnValue
     @Override
+    @CanIgnoreReturnValue
     public Builder<E> add(E... elements) {
       if (hashTable != null) {
         for (E e : elements) {
@@ -533,6 +534,19 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
       checkNotNull(elements);
       while (elements.hasNext()) {
         add(elements.next());
+      }
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    @SuppressWarnings("unchecked") // ArrayBasedBuilder stores its elements as Object.
+    Builder<E> combine(Builder<E> other) {
+      if (hashTable != null) {
+        for (int i = 0; i < other.size; ++i) {
+          add((E) other.contents[i]);
+        }
+      } else {
+        addAll(other.contents, other.size);
       }
       return this;
     }

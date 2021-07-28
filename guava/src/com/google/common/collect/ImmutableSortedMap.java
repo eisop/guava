@@ -24,6 +24,7 @@ import static com.google.common.collect.Maps.keyOrNull;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.DoNotCall;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -99,14 +100,8 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
       Function<? super T, ? extends K> keyFunction,
       Function<? super T, ? extends V> valueFunction,
       BinaryOperator<V> mergeFunction) {
-    checkNotNull(comparator);
-    checkNotNull(keyFunction);
-    checkNotNull(valueFunction);
-    checkNotNull(mergeFunction);
-    return Collectors.collectingAndThen(
-        Collectors.toMap(
-            keyFunction, valueFunction, mergeFunction, () -> new TreeMap<K, V>(comparator)),
-        ImmutableSortedMap::copyOfSorted);
+    return CollectCollectors.toImmutableSortedMap(
+        comparator, keyFunction, valueFunction, mergeFunction);
   }
 
   /*
@@ -242,8 +237,8 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
   }
 
   /**
-   * Returns an immutable map containing the given entries, with keys sorted by the provided
-   * comparator.
+   * Returns an immutable map containing the given entries, with keys sorted by their natural
+   * ordering.
    *
    * <p>This method is not type-safe, as it may be called on a map with keys that are not mutually
    * comparable.
@@ -530,7 +525,8 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
     @Beta
     @Override
     @Deprecated
-    public Builder<K, V> orderEntriesByValue(Comparator<? super V> valueComparator) {
+    @DoNotCall("Always throws UnsupportedOperationException")
+    public final Builder<K, V> orderEntriesByValue(Comparator<? super V> valueComparator) {
       throw new UnsupportedOperationException("Not available on ImmutableSortedMap.Builder");
     }
 
@@ -880,6 +876,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
   @CanIgnoreReturnValue
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final Entry<K, V> pollFirstEntry() {
     throw new UnsupportedOperationException();
   }
@@ -893,6 +890,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
   @CanIgnoreReturnValue
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final Entry<K, V> pollLastEntry() {
     throw new UnsupportedOperationException();
   }
@@ -929,19 +927,17 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
    * are reconstructed using public factory methods. This ensures that the implementation types
    * remain as implementation details.
    */
-  private static class SerializedForm extends ImmutableMap.SerializedForm {
-    private final Comparator<Object> comparator;
+  private static class SerializedForm<K, V> extends ImmutableMap.SerializedForm<K, V> {
+    private final Comparator<? super K> comparator;
 
-    @SuppressWarnings("unchecked")
-    SerializedForm(ImmutableSortedMap<?, ?> sortedMap) {
+    SerializedForm(ImmutableSortedMap<K, V> sortedMap) {
       super(sortedMap);
-      comparator = (Comparator<Object>) sortedMap.comparator();
+      comparator = sortedMap.comparator();
     }
 
     @Override
-    Object readResolve() {
-      Builder<Object, Object> builder = new Builder<>(comparator);
-      return createMap(builder);
+    Builder<K, V> makeBuilder(int size) {
+      return new Builder<>(comparator);
     }
 
     private static final long serialVersionUID = 0;
@@ -949,7 +945,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
 
   @Override
   Object writeReplace() {
-    return new SerializedForm(this);
+    return new SerializedForm<>(this);
   }
 
   // This class is never actually serialized directly, but we have to make the

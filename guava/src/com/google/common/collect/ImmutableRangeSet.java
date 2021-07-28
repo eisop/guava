@@ -27,6 +27,7 @@ import com.google.common.collect.SortedLists.KeyAbsentBehavior;
 import com.google.common.collect.SortedLists.KeyPresentBehavior;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.Serializable;
 import java.util.Collections;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collector;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -219,6 +219,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public void add(Range<C> range) {
     throw new UnsupportedOperationException();
   }
@@ -231,6 +232,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public void addAll(RangeSet<C> other) {
     throw new UnsupportedOperationException();
   }
@@ -243,6 +245,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public void addAll(Iterable<Range<C>> other) {
     throw new UnsupportedOperationException();
   }
@@ -255,6 +258,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public void remove(Range<C> range) {
     throw new UnsupportedOperationException();
   }
@@ -267,6 +271,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public void removeAll(RangeSet<C> other) {
     throw new UnsupportedOperationException();
   }
@@ -279,6 +284,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public void removeAll(Iterable<Range<C>> other) {
     throw new UnsupportedOperationException();
   }
@@ -541,7 +547,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
       this.domain = domain;
     }
 
-    private transient @MonotonicNonNull Integer size;
+    private transient @Nullable Integer size;
 
     @Override
     public int size() {

@@ -317,7 +317,8 @@ public abstract class ImmutableSet<E extends @NonNull Object> extends ImmutableC
   public boolean equals(@Nullable Object object) {
     if (object == this) {
       return true;
-    } else if (object instanceof ImmutableSet
+    }
+    if (object instanceof ImmutableSet
         && isHashCodeFast()
         && ((ImmutableSet<?>) object).isHashCodeFast()
         && hashCode() != object.hashCode()) {
@@ -528,7 +529,6 @@ public abstract class ImmutableSet<E extends @NonNull Object> extends ImmutableC
       return this;
     }
 
-    @Override
     /**
      * Adds each element of {@code elements} to the {@code ImmutableSet}, ignoring duplicate
      * elements (only the first duplicate element is added).
@@ -537,6 +537,7 @@ public abstract class ImmutableSet<E extends @NonNull Object> extends ImmutableC
      * @return this {@code Builder} object
      * @throws NullPointerException if {@code elements} is null or contains a null element
      */
+    @Override
     @CanIgnoreReturnValue
     public Builder<E> addAll(Iterable<? extends E> elements) {
       super.addAll(elements);
@@ -821,6 +822,8 @@ public abstract class ImmutableSet<E extends @NonNull Object> extends ImmutableC
       int targetTableSize = chooseTableSize(distinct);
       if (targetTableSize * 2 < hashTable.length) {
         hashTable = rebuildHashTable(targetTableSize, dedupedElements, distinct);
+        maxRunBeforeFallback = maxRunBeforeFallback(targetTableSize);
+        expandTableThreshold = (int) (DESIRED_LOAD_FACTOR * targetTableSize);
       }
       return hashFloodingDetected(hashTable) ? new JdkBackedSetBuilderImpl<E>(this) : this;
     }

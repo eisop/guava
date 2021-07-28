@@ -20,9 +20,9 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.ForOverride;
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import com.google.j2objc.annotations.RetainedWith;
 import java.io.Serializable;
 import java.util.Iterator;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 
@@ -55,7 +55,6 @@ import org.checkerframework.checker.nullness.qual.PolyNull;
  * <i>missing</i> information and the other is not. The {@link #convert} method handles this null
  * behavior for all converters; implementations of {@link #doForward} and {@link #doBackward} are
  * guaranteed to never be passed {@code null}, and must never return {@code null}.
- *
  *
  * <h3>Common ways to use</h3>
  *
@@ -119,7 +118,7 @@ public abstract class Converter<A, B> implements Function<A, B> {
   private final boolean handleNullAutomatically;
 
   // We lazily cache the reverse view to avoid allocating on every call to reverse().
-  @LazyInit private transient @MonotonicNonNull Converter<B, A> reverse;
+  @LazyInit @RetainedWith private transient @Nullable Converter<B, A> reverse;
 
   /** Constructor for use by subclasses. */
   protected Converter() {
@@ -483,7 +482,7 @@ public abstract class Converter<A, B> implements Function<A, B> {
    * "pass-through type".
    */
   private static final class IdentityConverter<T> extends Converter<T, T> implements Serializable {
-    static final IdentityConverter INSTANCE = new IdentityConverter();
+    static final IdentityConverter<?> INSTANCE = new IdentityConverter<>();
 
     @Override
     protected T doForward(T t) {

@@ -28,14 +28,20 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.base.Ascii;
 import com.google.common.base.Objects;
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Arrays;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.index.qual.IndexFor;
+import org.checkerframework.checker.index.qual.IndexOrHigh;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.ArrayLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * A binary encoding scheme for reversibly translating between byte sequences and printable ASCII
@@ -152,7 +158,7 @@ public abstract class BaseEncoding {
    * Encodes the specified range of the specified byte array, and returns the encoded {@code
    * String}.
    */
-  public final String encode(byte[] bytes, int off, int len) {
+  public final String encode(byte[] bytes, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
     checkPositionIndexes(off, off + len, bytes.length);
     StringBuilder result = new StringBuilder(maxEncodedSize(len));
     try {
@@ -187,14 +193,13 @@ public abstract class BaseEncoding {
 
   // TODO(lowasser): document the extent of leniency, probably after adding ignore(CharMatcher)
 
-  private static byte[] extract(byte[] result, int length) {
+  private static byte[] extract(byte[] result, @IndexOrHigh("#1") int length) {
     if (length == result.length) {
       return result;
-    } else {
-      byte[] trunc = new byte[length];
-      System.arraycopy(result, 0, trunc, 0, length);
-      return trunc;
     }
+    byte[] trunc = new byte[length];
+    System.arraycopy(result, 0, trunc, 0, length);
+    return trunc;
   }
 
   /**
@@ -226,7 +231,8 @@ public abstract class BaseEncoding {
    *
    * @throws DecodingException if the input is not a valid encoded string according to this
    *     encoding.
-   */ final byte[] decodeChecked(CharSequence chars)
+   */
+  final byte[] decodeChecked(CharSequence chars)
       throws DecodingException {
     chars = trimTrailingPadding(chars);
     byte[] tmp = new byte[maxDecodedSize(chars.length())];
@@ -258,13 +264,13 @@ public abstract class BaseEncoding {
 
   // Implementations for encoding/decoding
 
-  abstract int maxEncodedSize(int bytes);
+  abstract @NonNegative int maxEncodedSize(@NonNegative int bytes);
 
-  abstract void encodeTo(Appendable target, byte[] bytes, int off, int len) throws IOException;
+  abstract void encodeTo(Appendable target, byte[] bytes, @IndexOrHigh("#2") int off, @NonNegative @LTLengthOf(value = "#2", offset = "#3 - 1") int len) throws IOException;
 
-  abstract int maxDecodedSize(int chars);
+  abstract @NonNegative int maxDecodedSize(@NonNegative int chars);
 
-  abstract int decodeTo(byte[] target, CharSequence chars) throws DecodingException;
+  abstract @IndexFor("#1") int decodeTo(byte[] target, CharSequence chars) throws DecodingException;
 
   CharSequence trimTrailingPadding(CharSequence chars) {
     return checkNotNull(chars);
@@ -297,7 +303,7 @@ public abstract class BaseEncoding {
    *     string, or if {@code n <= 0}
    * @throws UnsupportedOperationException if this encoding already uses a separator
    */
-  public abstract BaseEncoding withSeparator(String separator, int n);
+  public abstract BaseEncoding withSeparator(String separator, @NonNegative int n);
 
   /**
    * Returns an encoding that behaves equivalently to this encoding, but encodes and decodes with
@@ -420,15 +426,17 @@ public abstract class BaseEncoding {
   private static final class Alphabet {
     private final String name;
     // this is meant to be immutable -- don't modify it!
-    private final char[] chars;
-    final int mask;
+    private final char @MinLen(1) [] chars;
+    final @IndexFor("this.chars") int mask;
     final int bitsPerChar;
     final int charsPerChunk;
     final int bytesPerChunk;
     private final byte[] decodabet;
     private final boolean[] validPadding;
 
-    Alphabet(String name, char[] chars) {
+    @SuppressWarnings({"array.access.unsafe", "assignment.type.incompatible"}) /* c will be a valid index by the time decodabet is accessed with it. validPadding has
+    enough space because the loop stops when i = bytesPerChunk. chars is the same as this.chars, so the assignment of this.mask is safe.*/
+    Alphabet(String name, char @MinLen(1) [] chars) {
       this.name = checkNotNull(name);
       this.chars = checkNotNull(chars);
       try {
@@ -441,7 +449,8 @@ public abstract class BaseEncoding {
        * e.g. for base64, bitsPerChar == 6, charsPerChunk == 4, and bytesPerChunk == 3. This makes
        * for the smallest chunk size that still has charsPerChunk * bitsPerChar be a multiple of 8.
        */
-      int gcd = Math.min(8, Integer.lowestOneBit(bitsPerChar));
+      @SuppressWarnings("assignment.type.incompatible") // lowestOneBit cannot return a value with first bit 1 when the value is non-negative
+      @NonNegative int gcd = Math.min(8, Integer.lowestOneBit(bitsPerChar));
       try {
         this.charsPerChunk = 8 / gcd;
         this.bytesPerChunk = bitsPerChar / gcd;
@@ -468,19 +477,21 @@ public abstract class BaseEncoding {
       this.validPadding = validPadding;
     }
 
-    char encode(int bits) {
+    char encode(@IndexFor("this.chars") int bits) {
       return chars[bits];
     }
 
-    boolean isValidPaddingStartPosition(int index) {
+    @SuppressWarnings("array.access.unsafe") // The index used is smaller than charsPerChunk, which is the length of validPadding
+    boolean isValidPaddingStartPosition(@NonNegative int index) {
       return validPadding[index % charsPerChunk];
     }
 
+    @SuppressWarnings("array.access.unsafe") // decodabet won't be accessed with an invalid index because a char is greater than 0.
     boolean canDecode(char ch) {
       return ch <= Ascii.MAX && decodabet[ch] != -1;
     }
 
-    int decode(char ch) throws DecodingException {
+    int decode(@IndexFor("this.decodabet") char ch) throws DecodingException {
       if (ch > Ascii.MAX) {
         throw new DecodingException("Unrecognized character: 0x" + Integer.toHexString(ch));
       }
@@ -516,29 +527,28 @@ public abstract class BaseEncoding {
     Alphabet upperCase() {
       if (!hasLowerCase()) {
         return this;
-      } else {
-        checkState(!hasUpperCase(), "Cannot call upperCase() on a mixed-case alphabet");
-        char[] upperCased = new char[chars.length];
-        for (int i = 0; i < chars.length; i++) {
-          upperCased[i] = Ascii.toUpperCase(chars[i]);
-        }
-        return new Alphabet(name + ".upperCase()", upperCased);
       }
+      checkState(!hasUpperCase(), "Cannot call upperCase() on a mixed-case alphabet");
+      char[] upperCased = new char[chars.length];
+      for (int i = 0; i < chars.length; i++) {
+        upperCased[i] = Ascii.toUpperCase(chars[i]);
+      }
+      return new Alphabet(name + ".upperCase()", upperCased);
     }
 
     Alphabet lowerCase() {
       if (!hasUpperCase()) {
         return this;
-      } else {
-        checkState(!hasLowerCase(), "Cannot call lowerCase() on a mixed-case alphabet");
-        char[] lowerCased = new char[chars.length];
-        for (int i = 0; i < chars.length; i++) {
-          lowerCased[i] = Ascii.toLowerCase(chars[i]);
-        }
-        return new Alphabet(name + ".lowerCase()", lowerCased);
       }
+      checkState(!hasLowerCase(), "Cannot call lowerCase() on a mixed-case alphabet");
+      char[] lowerCased = new char[chars.length];
+      for (int i = 0; i < chars.length; i++) {
+        lowerCased[i] = Ascii.toLowerCase(chars[i]);
+      }
+      return new Alphabet(name + ".lowerCase()", lowerCased);
     }
 
+    @SuppressWarnings("array.access.unsafe") // if c is not a valid index for decodabet, the second operand will not be processed.
     public boolean matches(char c) {
       return c < decodabet.length && decodabet[c] != -1;
     }
@@ -569,7 +579,7 @@ public abstract class BaseEncoding {
 
     final @Nullable Character paddingChar;
 
-    StandardBaseEncoding(String name, String alphabetChars, @Nullable Character paddingChar) {
+    StandardBaseEncoding(String name, @MinLen(1) String alphabetChars, @Nullable Character paddingChar) {
       this(new Alphabet(name, alphabetChars.toCharArray()), paddingChar);
     }
 
@@ -583,7 +593,8 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int maxEncodedSize(int bytes) {
+    @SuppressWarnings("return.type.incompatible") // Every operand is non-negative
+    @NonNegative int maxEncodedSize(@NonNegative int bytes) {
       return alphabet.charsPerChunk * divide(bytes, alphabet.bytesPerChunk, CEILING);
     }
 
@@ -633,7 +644,8 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    void encodeTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
+    @SuppressWarnings("argument.type.incompatible") /* The offset and the length have been previously checked and the loop stops before the arguments become invalid*/
+    void encodeTo(Appendable target, byte[] bytes, @IndexOrHigh("#2") int off, @NonNegative @LTLengthOf(value = "#2", offset = "#3 - 1") int len) throws IOException {
       checkNotNull(target);
       checkPositionIndexes(off, off + len, bytes.length);
       for (int i = 0; i < len; i += alphabet.bytesPerChunk) {
@@ -641,7 +653,7 @@ public abstract class BaseEncoding {
       }
     }
 
-    void encodeChunkTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
+    void encodeChunkTo(Appendable target, byte[] bytes, @IndexOrHigh("#2") int off, @NonNegative @LTLengthOf(value = "#2", offset = "#3 - 1") int len) throws IOException {
       checkNotNull(target);
       checkPositionIndexes(off, off + len, bytes.length);
       checkArgument(len <= alphabet.bytesPerChunk);
@@ -654,7 +666,7 @@ public abstract class BaseEncoding {
       final int bitOffset = (len + 1) * 8 - alphabet.bitsPerChar;
       int bitsProcessed = 0;
       while (bitsProcessed < len * 8) {
-        int charIndex = (int) (bitBuffer >>> (bitOffset - bitsProcessed)) & alphabet.mask;
+        @IndexFor("alphabet.chars") int charIndex = (int) (bitBuffer >>> (bitOffset - bitsProcessed)) & alphabet.mask;
         target.append(alphabet.encode(charIndex));
         bitsProcessed += alphabet.bitsPerChar;
       }
@@ -667,7 +679,8 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int maxDecodedSize(int chars) {
+    @SuppressWarnings("return.type.incompatible") // Every operand is non-negative
+    @NonNegative int maxDecodedSize(@NonNegative int chars) {
       return (int) ((alphabet.bitsPerChar * (long) chars + 7L) / 8L);
     }
 
@@ -703,7 +716,9 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
+    @SuppressWarnings({"argument.type.incompatible", "array.access.unsafe", "return.type.incompatible"})
+    /* chars will not be accessed with an invalid index because of the loop stop condition. */
+    @IndexFor("#1") int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
       checkNotNull(target);
       chars = trimTrailingPadding(chars);
       if (!alphabet.isValidPaddingStartPosition(chars.length())) {
@@ -772,6 +787,27 @@ public abstract class BaseEncoding {
         }
 
         @Override
+        public int read(byte[] buf, int off, int len) throws IOException {
+          // Overriding this to work around the fact that InputStream's default implementation of
+          // this method will silently swallow exceptions thrown by the single-byte read() method
+          // (other than on the first call to it), which in this case can cause invalid encoded
+          // strings to not throw an exception.
+          // See https://github.com/google/guava/issues/3542
+          checkPositionIndexes(off, off + len, buf.length);
+
+          int i = off;
+          for (; i < off + len; i++) {
+            int b = read();
+            if (b == -1) {
+              int read = i - off;
+              return read == 0 ? -1 : read;
+            }
+            buf[i] = (byte) b;
+          }
+          return i - off;
+        }
+
+        @Override
         public void close() throws IOException {
           reader.close();
         }
@@ -794,7 +830,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public BaseEncoding withSeparator(String separator, int afterEveryChars) {
+    public BaseEncoding withSeparator(String separator, @NonNegative int afterEveryChars) {
       for (int i = 0; i < separator.length(); i++) {
         checkArgument(
             !alphabet.matches(separator.charAt(i)),
@@ -810,8 +846,8 @@ public abstract class BaseEncoding {
       return new SeparatedBaseEncoding(this, separator, afterEveryChars);
     }
 
-    private transient @MonotonicNonNull BaseEncoding upperCase;
-    private transient @MonotonicNonNull BaseEncoding lowerCase;
+    @LazyInit private transient @Nullable BaseEncoding upperCase;
+    @LazyInit private transient @Nullable BaseEncoding lowerCase;
 
     @Override
     public BaseEncoding upperCase() {
@@ -870,10 +906,13 @@ public abstract class BaseEncoding {
   static final class Base16Encoding extends StandardBaseEncoding {
     final char[] encoding = new char[512];
 
-    Base16Encoding(String name, String alphabetChars) {
+    Base16Encoding(String name, @MinLen(1) String alphabetChars) {
       this(new Alphabet(name, alphabetChars.toCharArray()));
     }
 
+    @SuppressWarnings({"array.access.unsafe", "argument.type.incompatible"}) /* Since encoding has a length of 512, it is safe to
+    access it with indexes from 0 to 255 and 256 to 511, respectively. The calls to encode are safe because it has been previously
+    verified that the length of chars array is exactly 16*/
     private Base16Encoding(Alphabet alphabet) {
       super(alphabet, null);
       checkArgument(alphabet.chars.length == 16);
@@ -884,7 +923,8 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    void encodeTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
+    @SuppressWarnings("array.access.unsafe") // encoding has length 512, so it can be accessed with b + 256
+    void encodeTo(Appendable target, byte[] bytes, @IndexOrHigh("#2") int off, @NonNegative @LTLengthOf(value = "#2", offset = "#3 - 1") int len) throws IOException {
       checkNotNull(target);
       checkPositionIndexes(off, off + len, bytes.length);
       for (int i = 0; i < len; ++i) {
@@ -895,13 +935,16 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
+    @SuppressWarnings({"return.type.incompatible", "array.access.unsafe"}) /* bytesWritten grows slower than i, which stops
+    when it exceeds the length of target */
+    @IndexFor("#1") int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
       checkNotNull(target);
       if (chars.length() % 2 == 1) {
         throw new DecodingException("Invalid input length " + chars.length());
       }
       int bytesWritten = 0;
       for (int i = 0; i < chars.length(); i += 2) {
+        @SuppressWarnings("argument.type.incompatible") // a char variable  is a valid index for chars.
         int decoded = alphabet.decode(chars.charAt(i)) << 4 | alphabet.decode(chars.charAt(i + 1));
         target[bytesWritten++] = (byte) decoded;
       }
@@ -915,7 +958,7 @@ public abstract class BaseEncoding {
   }
 
   static final class Base64Encoding extends StandardBaseEncoding {
-    Base64Encoding(String name, String alphabetChars, @Nullable Character paddingChar) {
+    Base64Encoding(String name, @ArrayLen(64) String alphabetChars, @Nullable Character paddingChar) {
       this(new Alphabet(name, alphabetChars.toCharArray()), paddingChar);
     }
 
@@ -925,11 +968,14 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    void encodeTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
+    @SuppressWarnings("argument.type.incompatible") /* i is between off and off + len, so the last method call is safe.
+    alphabet.chars has length 64, all arguments of encode() are 6-bits long */
+    void encodeTo(Appendable target, byte[] bytes, @IndexOrHigh("#2") int off, @NonNegative @LTLengthOf(value = "#2", offset = "#3 - 1") int len) throws IOException {
       checkNotNull(target);
       checkPositionIndexes(off, off + len, bytes.length);
       int i = off;
       for (int remaining = len; remaining >= 3; remaining -= 3) {
+        @SuppressWarnings("array.access.unsafe") // i is a valid index because the parameters have been checked
         int chunk = (bytes[i++] & 0xFF) << 16 | (bytes[i++] & 0xFF) << 8 | bytes[i++] & 0xFF;
         target.append(alphabet.encode(chunk >>> 18));
         target.append(alphabet.encode((chunk >>> 12) & 0x3F));
@@ -942,7 +988,10 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
+    @SuppressWarnings({"argument.type.incompatible", "array.access.unsafe", "return.type.incompatible"})
+    /* i will be a valid index for chars because it is verified at every step. charAt() returns a char value, which is known to be
+    a valid index for alphabet. bytesWritten grows just like variable i, so it will not exceed the length of chars. */
+    @IndexFor("#1") int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
       checkNotNull(target);
       chars = trimTrailingPadding(chars);
       if (!alphabet.isValidPaddingStartPosition(chars.length())) {
@@ -998,7 +1047,7 @@ public abstract class BaseEncoding {
   }
 
   static Appendable separatingAppendable(
-      final Appendable delegate, final String separator, final int afterEveryChars) {
+      final Appendable delegate, final String separator, final @NonNegative int afterEveryChars) {
     checkNotNull(delegate);
     checkNotNull(separator);
     checkArgument(afterEveryChars > 0);
@@ -1030,13 +1079,13 @@ public abstract class BaseEncoding {
 
   @GwtIncompatible // Writer
   static Writer separatingWriter(
-      final Writer delegate, final String separator, final int afterEveryChars) {
-    final Appendable seperatingAppendable =
+      final Writer delegate, final String separator, final @NonNegative int afterEveryChars) {
+    final Appendable separatingAppendable =
         separatingAppendable(delegate, separator, afterEveryChars);
     return new Writer() {
       @Override
       public void write(int c) throws IOException {
-        seperatingAppendable.append((char) c);
+        separatingAppendable.append((char) c);
       }
 
       @Override
@@ -1059,9 +1108,9 @@ public abstract class BaseEncoding {
   static final class SeparatedBaseEncoding extends BaseEncoding {
     private final BaseEncoding delegate;
     private final String separator;
-    private final int afterEveryChars;
+    private final @NonNegative int afterEveryChars;
 
-    SeparatedBaseEncoding(BaseEncoding delegate, String separator, int afterEveryChars) {
+    SeparatedBaseEncoding(BaseEncoding delegate, String separator, @NonNegative int afterEveryChars) {
       this.delegate = checkNotNull(delegate);
       this.separator = checkNotNull(separator);
       this.afterEveryChars = afterEveryChars;
@@ -1075,7 +1124,8 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int maxEncodedSize(int bytes) {
+    @SuppressWarnings("return.type.incompatible") // Every operand in the return expression is non-negative
+    @NonNegative int maxEncodedSize(@NonNegative int bytes) {
       int unseparatedSize = delegate.maxEncodedSize(bytes);
       return unseparatedSize
           + separator.length() * divide(Math.max(0, unseparatedSize - 1), afterEveryChars, FLOOR);
@@ -1088,12 +1138,12 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    void encodeTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
+    void encodeTo(Appendable target, byte[] bytes, @IndexOrHigh("#2") int off, @NonNegative @LTLengthOf(value = "#2", offset = "#3 - 1") int len) throws IOException {
       delegate.encodeTo(separatingAppendable(target, separator, afterEveryChars), bytes, off, len);
     }
 
     @Override
-    int maxDecodedSize(int chars) {
+    @NonNegative int maxDecodedSize(@NonNegative int chars) {
       return delegate.maxDecodedSize(chars);
     }
 
@@ -1110,7 +1160,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
+    @IndexFor("#1") int decodeTo(byte[] target, CharSequence chars) throws DecodingException {
       StringBuilder stripped = new StringBuilder(chars.length());
       for (int i = 0; i < chars.length(); i++) {
         char c = chars.charAt(i);
@@ -1138,7 +1188,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public BaseEncoding withSeparator(String separator, int afterEveryChars) {
+    public BaseEncoding withSeparator(String separator, @NonNegative int afterEveryChars) {
       throw new UnsupportedOperationException("Already have a separator");
     }
 

@@ -1,8 +1,19 @@
+# Workaround for https://status.dev.azure.com/_event/179641421
+trigger:
+  branches:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+    - '*'
+
+
 jobs:
 - job: typecheck
   pool:
-    vmImage: 'ubuntu-16.04'
-  container: mdernst/ubuntu-for-cf-jdk8:latest
+    vmImage: 'ubuntu-latest'
+  container: mdernst/cf-ubuntu-jdk8:latest
   strategy:
     matrix:
       formatterJob:

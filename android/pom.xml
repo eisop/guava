@@ -14,10 +14,27 @@
   <properties>
     <!-- Override this with -Dtest.include="**/SomeTest.java" on the CLI -->
     <test.include>%regex[.*.class]</test.include>
-    <truth.version>0.44</truth.version>
-    <animal.sniffer.version>1.17</animal.sniffer.version>
+    <truth.version>1.1</truth.version>
+    <!--
+      Upgrading to 1.19 breaks things: Animal Sniffer reports a problem with the
+      use of ClassValue in FuturesGetChecked, even though we've added a
+      suppression annotation.
+
+      The problem might be
+      https://github.com/mojohaus/animal-sniffer/issues/131.
+
+      We could probably work around this with a different suppression strategy,
+      perhaps (untested):
+
+      <ignores><ignore>com.google.common.util.concurrent.FuturesGetChecked$GetCheckedTypeValidatorHolder$ClassValueValidator</ignore></ignores>
+
+      But upgrading doesn't really buy us much, as far as I know. (1.19 does
+      check test code in addition to prod code, but I don't think we care.)
+    -->
+    <animal.sniffer.version>1.18</animal.sniffer.version>
     <maven-javadoc-plugin.version>3.1.0</maven-javadoc-plugin.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>    
+    <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <issueManagement>
     <system>GitHub Issues</system>
@@ -69,6 +86,7 @@
         <directory>src</directory>
         <excludes>
           <exclude>**/*.java</exclude>
+          <exclude>**/*.sw*</exclude>
         </excludes>
       </resource>
     </resources>
@@ -116,20 +134,25 @@
           <configuration>
             <source>1.7</source>
             <target>1.7</target>
+            <compilerArgs>
+              <!--
+                   Make includes/excludes fully work:
+                   https://issues.apache.org/jira/browse/MCOMPILER-174
+
+                   (Compare what guava-gwt has to do for maven-javadoc-plugin.)
+              -->
+              <arg>-sourcepath</arg>
+              <arg>doesnotexist</arg>
+            </compilerArgs>
           </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.0.2</version>
-          <configuration>
-            <excludes>
-              <exclude>**/ForceGuavaCompilation*</exclude>
-            </excludes>
-          </configuration>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.1.2</version>
+          <version>${maven-source-plugin.version}</version>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -137,17 +160,13 @@
               <goals><goal>jar</goal></goals>
             </execution>
           </executions>
-          <configuration>
-            <excludes>
-              <exclude>**/ForceGuavaCompilation*</exclude>
-            </excludes>
-          </configuration>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>animal-sniffer-maven-plugin</artifactId>
           <version>${animal.sniffer.version}</version>
           <configuration>
+            <annotations>com.google.common.util.concurrent.IgnoreJRERequirement</annotations>
             <signature>
               <groupId>org.codehaus.mojo.signature</groupId>
               <artifactId>java16-sun</artifactId>
@@ -203,7 +222,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.7.2</version>
+          <version>2.22.1</version>
           <configuration>
             <includes>
               <include>${test.include}</include>
@@ -227,7 +246,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.0.0-M2</version>
+          <version>3.0.0-M3</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -264,7 +283,7 @@
       <dependency>
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
-        <version>2.3.2</version>
+        <version>2.5.1</version>
       </dependency>
       <dependency>
         <groupId>com.google.j2objc</groupId>
@@ -274,19 +293,19 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.12</version>
+        <version>4.13.2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.easymock</groupId>
         <artifactId>easymock</artifactId>
-        <version>3.0</version>
+        <version>4.2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>2.19.0</version>
+        <version>3.6.28</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -331,7 +350,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-source-plugin</artifactId>
-              <version>2.1.2</version>
+              <version>${maven-source-plugin.version}</version>
               <executions>
                 <execution>
                   <id>attach-sources</id>

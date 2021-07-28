@@ -1,20 +1,24 @@
 #!/bin/bash
-ROOT="$( cd "$(dirname "$0")"/.. ; pwd -P )"
 
 # Runs typechecking in a continuous integration job.
 
 # Required argument $1 is one of:
-#   formatter, interning, lock, nullness, regex, signature, nothing
+#   formatter, index, interning, lock, nullness, regex, signature, nothing
 
 
 # Fail the whole script if any command fails
 set -e
 
 ## Build Checker Framework
-(cd .. && git clone --depth 1 https://github.com/typetools/checker-framework.git)
-export CHECKERFRAMEWORK=`(cd ../checker-framework/ && pwd -P)`
-# This also builds annotation-tools and jsr308-langtools
-(cd ${CHECKERFRAMEWORK} && ./.travis-build-without-test.sh downloadjdk)
+# If variable is set or directory exists, assume the Checker Framework is built.
+# Don't re-build because we might use wrong arguments (e.g., downloadjdk).
+if [ -z "${CHECKERFRAMEWORK}" ] && [ ! -d "../checker-framework/" ] ; then
+  (cd .. && git clone --depth 1 https://github.com/typetools/checker-framework.git)
+  CHECKERFRAMEWORK=$(cd ../checker-framework/ >/dev/null 2>&1 && pwd -P)
+  export CHECKERFRAMEWORK
+  # This also builds annotation-tools and jsr308-langtools
+  (cd "${CHECKERFRAMEWORK}" && checker/bin-devel/build.sh downloadjdk)
+fi
 
 # As of 7/27/2019, there are only annotations for:
 #  * index

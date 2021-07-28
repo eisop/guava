@@ -40,7 +40,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.stream.Collector;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -81,16 +80,7 @@ public final class Multisets {
       java.util.function.Function<? super T, E> elementFunction,
       java.util.function.ToIntFunction<? super T> countFunction,
       java.util.function.Supplier<M> multisetSupplier) {
-    checkNotNull(elementFunction);
-    checkNotNull(countFunction);
-    checkNotNull(multisetSupplier);
-    return Collector.of(
-        multisetSupplier,
-        (ms, t) -> ms.add(elementFunction.apply(t), countFunction.applyAsInt(t)),
-        (ms1, ms2) -> {
-          ms1.addAll(ms2);
-          return ms1;
-        });
+    return CollectCollectors.toMultiset(elementFunction, countFunction, multisetSupplier);
   }
 
   /**
@@ -137,7 +127,7 @@ public final class Multisets {
       return (Multiset<E>) delegate;
     }
 
-    @MonotonicNonNull transient Set<E> elementSet;
+    transient @Nullable Set<E> elementSet;
 
     Set<E> createElementSet() {
       return Collections.<E>unmodifiableSet(delegate.elementSet());
@@ -150,7 +140,7 @@ public final class Multisets {
       return (es == null) ? elementSet = createElementSet() : es;
     }
 
-    @MonotonicNonNull transient Set<Multiset.Entry<E>> entrySet;
+    transient @Nullable Set<Multiset.Entry<E>> entrySet;
 
     @SideEffectFree
     @SuppressWarnings("unchecked")
@@ -1044,7 +1034,7 @@ public final class Multisets {
         if (entryCount != 0) {
           // Safe as long as we never add a new entry, which we won't.
           @SuppressWarnings("unchecked")
-          Multiset<Object> multiset = (Multiset) multiset();
+          Multiset<Object> multiset = (Multiset<Object>) multiset();
           return multiset.setCount(element, entryCount, 0);
         }
       }
@@ -1065,7 +1055,7 @@ public final class Multisets {
   static final class MultisetIteratorImpl<E> implements Iterator<E> {
     private final Multiset<E> multiset;
     private final Iterator<Entry<E>> entryIterator;
-    @MonotonicNonNull private Entry<E> currentEntry;
+    private @Nullable Entry<E> currentEntry;
 
     /** Count of subsequent elements equal to current element */
     private int laterCount;

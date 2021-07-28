@@ -44,7 +44,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  *
  * <p><b>Warning:</b> The comparators or comparables used must be <i>consistent with equals</i> as
  * explained by the {@link Comparable} class specification. Otherwise, the resulting multiset will
- * violate the general contract of {@link SetMultimap}, which it is specified in terms of {@link
+ * violate the general contract of {@link SetMultimap}, which is specified in terms of {@link
  * Object#equals}.
  *
  * <p>The collections returned by {@code keySet} and {@code asMap} iterate through the keys
@@ -117,10 +117,8 @@ public class TreeMultimap<K, V> extends AbstractSortedKeySortedSetMultimap<K, V>
   }
 
   private TreeMultimap(
-      @Nullable
-      Comparator<? super K> keyComparator,
-      @Nullable
-      Comparator<? super V> valueComparator,
+      @Nullable Comparator<? super K> keyComparator,
+      @Nullable Comparator<? super V> valueComparator,
       Multimap<? extends K, ? extends V> multimap) {
     this(keyComparator, valueComparator);
     putAll(multimap);

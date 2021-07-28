@@ -31,6 +31,11 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.util.Arrays;
+import org.checkerframework.checker.index.qual.GTENegativeOne;
+import org.checkerframework.checker.index.qual.IndexOrHigh;
+import org.checkerframework.checker.index.qual.LTEqLengthOf;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
  * An {@link InputStream} that converts characters from a {@link Reader} into bytes using an
@@ -78,7 +83,7 @@ final class ReaderInputStream extends InputStream {
    * @param bufferSize size of internal input and output buffers
    * @throws IllegalArgumentException if bufferSize is non-positive
    */
-  ReaderInputStream(Reader reader, Charset charset, int bufferSize) {
+  ReaderInputStream(Reader reader, Charset charset, @NonNegative int bufferSize) {
     this(
         reader,
         charset
@@ -97,14 +102,14 @@ final class ReaderInputStream extends InputStream {
    * @param bufferSize size of internal input and output buffers
    * @throws IllegalArgumentException if bufferSize is non-positive
    */
-  ReaderInputStream(Reader reader, CharsetEncoder encoder, int bufferSize) {
+  ReaderInputStream(Reader reader, CharsetEncoder encoder, @NonNegative int bufferSize) {
     this.reader = checkNotNull(reader);
     this.encoder = checkNotNull(encoder);
     checkArgument(bufferSize > 0, "bufferSize must be positive: %s", bufferSize);
     encoder.reset();
 
     charBuffer = CharBuffer.allocate(bufferSize);
-    charBuffer.flip();
+    Java8Compatibility.flip(charBuffer);
 
     byteBuffer = ByteBuffer.allocate(bufferSize);
   }
@@ -115,14 +120,17 @@ final class ReaderInputStream extends InputStream {
   }
 
   @Override
-  public int read() throws IOException {
+  public @GTENegativeOne int read() throws IOException {
     return (read(singleByte) == 1) ? UnsignedBytes.toInt(singleByte[0]) : -1;
   }
 
   // TODO(chrisn): Consider trying to encode/flush directly to the argument byte
   // buffer when possible.
   @Override
-  public int read(byte[] b, int off, int len) throws IOException {
+  @SuppressWarnings({"argument.type.incompatible", "return.type.incompatible"}) /*
+  #1. The call to drain is safe because both off and len have been checked before and totalBytesRead can't exceed len, because that is the stopping condition.
+  #2. The return type is safe because the while loop stops at len index, which has been previously checked */
+  public @GTENegativeOne @LTEqLengthOf("#1") int read(byte[] b, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) throws IOException {
     // Obey InputStream contract.
     checkPositionIndexes(off, off + len, b.length);
     if (len == 0) {
@@ -138,12 +146,12 @@ final class ReaderInputStream extends InputStream {
       // We stay in draining mode until there are no bytes left in the output buffer. Then we go
       // back to encoding/flushing.
       if (draining) {
-        totalBytesRead += drain(b, off + totalBytesRead, len - totalBytesRead);
+        totalBytesRead += drain(b, off + totalBytesRead, len - totalBytesRead); // #1
         if (totalBytesRead == len || doneFlushing) {
-          return (totalBytesRead > 0) ? totalBytesRead : -1;
+          return (totalBytesRead > 0) ? totalBytesRead : -1; // #2
         }
         draining = false;
-        byteBuffer.clear();
+        Java8Compatibility.clear(byteBuffer);
       }
 
       while (true) {
@@ -189,8 +197,8 @@ final class ReaderInputStream extends InputStream {
   private static CharBuffer grow(CharBuffer buf) {
     char[] copy = Arrays.copyOf(buf.array(), buf.capacity() * 2);
     CharBuffer bigger = CharBuffer.wrap(copy);
-    bigger.position(buf.position());
-    bigger.limit(buf.limit());
+    Java8Compatibility.position(bigger, buf.position());
+    Java8Compatibility.limit(bigger, buf.limit());
     return bigger;
   }
 
@@ -207,7 +215,7 @@ final class ReaderInputStream extends InputStream {
     if (availableCapacity(charBuffer) == 0) {
       if (charBuffer.position() > 0) {
         // (2) There is room in the buffer. Move existing bytes to the beginning.
-        charBuffer.compact().flip();
+        Java8Compatibility.flip(charBuffer.compact());
       } else {
         // (3) Entire buffer is full, need bigger buffer.
         charBuffer = grow(charBuffer);
@@ -216,11 +224,13 @@ final class ReaderInputStream extends InputStream {
 
     // (1) Read more characters into free space at end of array.
     int limit = charBuffer.limit();
+    @SuppressWarnings("argument.type.incompatible") /* limit is within bounds because it was verified in constructor
+    and availableCapacity returns the difference between the capacity and the limit */
     int numChars = reader.read(charBuffer.array(), limit, availableCapacity(charBuffer));
     if (numChars == -1) {
       endOfInput = true;
     } else {
-      charBuffer.limit(limit + numChars);
+      Java8Compatibility.limit(charBuffer, limit + numChars);
     }
   }
 
@@ -235,7 +245,7 @@ final class ReaderInputStream extends InputStream {
    * overflow must be due to a small output buffer.
    */
   private void startDraining(boolean overflow) {
-    byteBuffer.flip();
+    Java8Compatibility.flip(byteBuffer);
     if (overflow && byteBuffer.remaining() == 0) {
       byteBuffer = ByteBuffer.allocate(byteBuffer.capacity() * 2);
     } else {
@@ -247,7 +257,7 @@ final class ReaderInputStream extends InputStream {
    * Copy as much of the byte buffer into the output array as possible, returning the (positive)
    * number of characters copied.
    */
-  private int drain(byte[] b, int off, int len) {
+  private @NonNegative int drain(byte[] b, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
     int remaining = Math.min(len, byteBuffer.remaining());
     byteBuffer.get(b, off, remaining);
     return remaining;
