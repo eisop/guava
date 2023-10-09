@@ -267,17 +267,17 @@
         <version>3.0.2</version>
       </dependency>
       <dependency>
-        <groupId>org.checkerframework</groupId>
+        <groupId>io.github.eisop</groupId>
         <artifactId>checker-qual</artifactId>
         <version>${checker-framework.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.checkerframework</groupId>
+        <groupId>io.github.eisop</groupId>
         <artifactId>checker-util</artifactId>
         <version>${checker-framework.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.checkerframework</groupId>
+        <groupId>io.github.eisop</groupId>
         <artifactId>checker-qual</artifactId>
         <version>${checker-framework.version}</version>
         <classifier>sources</classifier>

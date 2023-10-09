@@ -104,7 +104,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.checkerframework</groupId>
+      <groupId>io.github.eisop</groupId>
       <artifactId>checker-qual</artifactId>
     </dependency>
   </dependencies>

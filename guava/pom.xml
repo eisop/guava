@@ -61,11 +61,11 @@
       <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.checkerframework</groupId>
+      <groupId>io.github.eisop</groupId>
       <artifactId>checker-qual</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.checkerframework</groupId>
+      <groupId>io.github.eisop</groupId>
       <artifactId>checker-util</artifactId>
     </dependency>
     <dependency>
@@ -83,15 +83,15 @@
        -P checkerframework-local -->
     <!-- Not needed; appears above.
     <dependency>
-      <groupId>org.checkerframework</groupId>
+      <groupId>io.github.eisop</groupId>
       <artifactId>checker-qual</artifactId>
       <version>2.5.5</version>
     </dependency>
     -->
     <dependency>
-      <groupId>org.checkerframework</groupId>
+      <groupId>io.github.eisop</groupId>
       <artifactId>checker</artifactId>
-      <version>3.35.0</version>
+      <version>3.34.0-eisop1</version>
     </dependency>
   </dependencies>
   <build>
@@ -381,14 +381,14 @@
       <id>checkerframework-local</id>
       <dependencies>
         <dependency>
-          <groupId>org.checkerframework</groupId>
+          <groupId>io.github.eisop</groupId>
           <artifactId>checker-qual</artifactId>
           <version>0.0.0</version>
           <scope>system</scope>
           <systemPath>${CHECKERFRAMEWORK}/checker/dist/checker-qual.jar</systemPath>
         </dependency>
         <dependency>
-          <groupId>org.checkerframework</groupId>
+          <groupId>io.github.eisop</groupId>
           <artifactId>checker</artifactId>
           <version>0.0.0</version>
           <scope>system</scope>
