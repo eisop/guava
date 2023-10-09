@@ -23,7 +23,9 @@ import com.google.common.annotations.GwtIncompatible;
 import java.io.Serializable;
 import java.util.Spliterator;
 import java.util.function.Consumer;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * {@code keySet()} implementation for {@link ImmutableMap}.
@@ -32,6 +34,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Kevin Bourrillion
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 final class ImmutableMapKeySet<K, V> extends IndexedImmutableSet<K> {
   private final ImmutableMap<K, V> map;
 
@@ -40,7 +43,7 @@ final class ImmutableMapKeySet<K, V> extends IndexedImmutableSet<K> {
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return map.size();
   }
 
@@ -55,7 +58,7 @@ final class ImmutableMapKeySet<K, V> extends IndexedImmutableSet<K> {
   }
 
   @Override
-  public boolean contains(@Nullable Object object) {
+  public boolean contains(@CheckForNull @UnknownSignedness Object object) {
     return map.containsKey(object);
   }
 

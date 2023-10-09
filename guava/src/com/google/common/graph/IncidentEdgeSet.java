@@ -18,15 +18,19 @@ package com.google.common.graph;
 
 import java.util.AbstractSet;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * Abstract base class for an incident edges set that allows different implementations of {@link
  * AbstractSet#iterator()}.
  */
+@ElementTypesAreNonnullByDefault
 abstract class IncidentEdgeSet<N> extends AbstractSet<EndpointPair<N>> {
-  protected final N node;
-  protected final BaseGraph<N> graph;
+  final N node;
+  final BaseGraph<N> graph;
 
   IncidentEdgeSet(BaseGraph<N> graph, N node) {
     this.graph = graph;
@@ -34,12 +38,12 @@ abstract class IncidentEdgeSet<N> extends AbstractSet<EndpointPair<N>> {
   }
 
   @Override
-  public boolean remove(Object o) {
+  public boolean remove(@CheckForNull @UnknownSignedness Object o) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     if (graph.isDirected()) {
       return graph.inDegree(node)
           + graph.outDegree(node)
@@ -50,7 +54,7 @@ abstract class IncidentEdgeSet<N> extends AbstractSet<EndpointPair<N>> {
   }
 
   @Override
-  public boolean contains(@Nullable Object obj) {
+  public boolean contains(@CheckForNull @UnknownSignedness Object obj) {
     if (!(obj instanceof EndpointPair)) {
       return false;
     }

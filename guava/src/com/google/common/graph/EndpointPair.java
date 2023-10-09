@@ -24,7 +24,8 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.google.errorprone.annotations.Immutable;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * An immutable pair representing the two endpoints of an edge in a graph. The {@link EndpointPair}
@@ -39,6 +40,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @Beta
 @Immutable(containerOf = {"N"})
+@ElementTypesAreNonnullByDefault
 public abstract class EndpointPair<N> implements Iterable<N> {
   private final N nodeU;
   private final N nodeV;
@@ -50,13 +52,13 @@ public abstract class EndpointPair<N> implements Iterable<N> {
 
   /** Returns an {@link EndpointPair} representing the endpoints of a directed edge. */
   public static <N> EndpointPair<N> ordered(N source, N target) {
-    return new Ordered<N>(source, target);
+    return new Ordered<>(source, target);
   }
 
   /** Returns an {@link EndpointPair} representing the endpoints of an undirected edge. */
   public static <N> EndpointPair<N> unordered(N nodeU, N nodeV) {
     // Swap nodes on purpose to prevent callers from relying on the "ordering" of an unordered pair.
-    return new Unordered<N>(nodeV, nodeU);
+    return new Unordered<>(nodeV, nodeU);
   }
 
   /** Returns an {@link EndpointPair} representing the endpoints of an edge in {@code graph}. */
@@ -103,8 +105,9 @@ public abstract class EndpointPair<N> implements Iterable<N> {
    * Returns the node that is adjacent to {@code node} along the origin edge.
    *
    * @throws IllegalArgumentException if this {@link EndpointPair} does not contain {@code node}
+   * @since 20.0 (but the argument type was changed from {@code Object} to {@code N} in 31.0)
    */
-  public final N adjacentNode(Object node) {
+  public final N adjacentNode(N node) {
     if (node.equals(nodeU)) {
       return nodeV;
     } else if (node.equals(nodeV)) {
@@ -132,7 +135,7 @@ public abstract class EndpointPair<N> implements Iterable<N> {
    * ordered {@link EndpointPair} is never equal to an unordered {@link EndpointPair}.
    */
   @Override
-  public abstract boolean equals(@Nullable Object obj);
+  public abstract boolean equals(@CheckForNull Object obj);
 
   /**
    * The hashcode of an ordered {@link EndpointPair} is equal to {@code Objects.hashCode(source(),
@@ -140,7 +143,7 @@ public abstract class EndpointPair<N> implements Iterable<N> {
    * nodeU().hashCode() + nodeV().hashCode()}.
    */
   @Override
-  public abstract int hashCode();
+  public abstract int hashCode(@UnknownSignedness EndpointPair<N> this);
 
   private static final class Ordered<N> extends EndpointPair<N> {
     private Ordered(N source, N target) {
@@ -163,7 +166,7 @@ public abstract class EndpointPair<N> implements Iterable<N> {
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public boolean equals(@CheckForNull Object obj) {
       if (obj == this) {
         return true;
       }
@@ -180,7 +183,7 @@ public abstract class EndpointPair<N> implements Iterable<N> {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness Ordered<N> this) {
       return Objects.hashCode(source(), target());
     }
 
@@ -211,7 +214,7 @@ public abstract class EndpointPair<N> implements Iterable<N> {
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public boolean equals(@CheckForNull Object obj) {
       if (obj == this) {
         return true;
       }
@@ -240,7 +243,7 @@ public abstract class EndpointPair<N> implements Iterable<N> {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness Unordered<N> this) {
       return nodeU().hashCode() + nodeV().hashCode();
     }
 

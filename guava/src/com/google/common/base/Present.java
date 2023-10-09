@@ -19,10 +19,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Collections;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /** Implementation of an {@link Optional} containing a reference. */
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 final class Present<T> extends Optional<T> {
   private final T reference;
 
@@ -36,12 +40,12 @@ final class Present<T> extends Optional<T> {
   }
 
   @Override
-  public T get() {
+  public @NonNull T get() {
     return reference;
   }
 
   @Override
-  public T or(T defaultValue) {
+  public @NonNull T or(T defaultValue) {
     checkNotNull(defaultValue, "use Optional.orNull() instead of Optional.or(null)");
     return reference;
   }
@@ -53,7 +57,7 @@ final class Present<T> extends Optional<T> {
   }
 
   @Override
-  public T or(Supplier<? extends T> supplier) {
+  public @NonNull T or(Supplier<? extends T> supplier) {
     checkNotNull(supplier);
     return reference;
   }
@@ -64,20 +68,20 @@ final class Present<T> extends Optional<T> {
   }
 
   @Override
-  public Set<T> asSet() {
+  public Set<@NonNull T> asSet() {
     return Collections.singleton(reference);
   }
 
   @Override
-  public <V> Optional<V> transform(Function<? super T, V> function) {
-    return new Present<V>(
+  public <V extends @NonNull Object> Optional<V> transform(Function<? super T, V> function) {
+    return new Present<>(
         checkNotNull(
             function.apply(reference),
             "the Function passed to Optional.transform() must not return null."));
   }
 
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull Object object) {
     if (object instanceof Present) {
       Present<?> other = (Present<?>) object;
       return reference.equals(other.reference);
@@ -86,7 +90,7 @@ final class Present<T> extends Optional<T> {
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness Present<T> this) {
     return 0x598df91c + reference.hashCode();
   }
 

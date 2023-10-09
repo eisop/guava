@@ -21,6 +21,7 @@ import static com.google.common.cache.CacheBuilder.UNSET_INT;
 import static com.google.common.util.concurrent.Futures.transform;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import com.google.common.annotations.GwtCompatible;
@@ -35,7 +36,6 @@ import com.google.common.cache.CacheBuilder.NullListener;
 import com.google.common.cache.CacheBuilder.OneWeigher;
 import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import com.google.common.cache.CacheLoader.UnsupportedLoadingOperationException;
-import com.google.common.cache.LocalCache.AbstractCacheSet;
 import com.google.common.collect.AbstractSequentialIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -85,7 +85,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * The concurrent hash map implementation built by {@link CacheBuilder}.
@@ -97,8 +102,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Bob Lee ({@code com.google.common.collect.MapMaker})
  * @author Doug Lea ({@code ConcurrentHashMap})
  */
-@SuppressWarnings("GoodTime") // lots of violations (nanosecond math)
+@SuppressWarnings({
+  "GoodTime", // lots of violations (nanosecond math)
+  "nullness", // too much trouble for the payoff
+})
 @GwtCompatible(emulated = true)
+// TODO(cpovirk): Annotate for nullness.
 class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> {
 
   /*
@@ -911,7 +920,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
         }
 
         @Override
-        public int size() {
+        public @NonNegative int size() {
           return 0;
         }
 
@@ -2185,7 +2194,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
       }
     }
 
-    V compute(K key, int hash, BiFunction<? super K, ? super V, ? extends V> function) {
+    V compute(K key, int hash, BiFunction<? super K, ? super @Nullable V, ? extends V> function) {
       ReferenceEntry<K, V> e;
       ValueReference<K, V> valueReference = null;
       ComputingValueReference<K, V> computingValueReference = null;
@@ -3554,7 +3563,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
       }
     }
 
-    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> function) {
+    public V compute(K key, BiFunction<? super K, ? super @Nullable V, ? extends V> function) {
       stopwatch.start();
       V previousValue;
       try {
@@ -3697,7 +3706,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean remove(Object o) {
+    public boolean remove(@UnknownSignedness Object o) {
       ReferenceEntry<K, V> e = (ReferenceEntry<K, V>) o;
       ReferenceEntry<K, V> previous = e.getPreviousInWriteQueue();
       ReferenceEntry<K, V> next = e.getNextInWriteQueue();
@@ -3709,7 +3718,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       ReferenceEntry<K, V> e = (ReferenceEntry<K, V>) o;
       return e.getNextInWriteQueue() != NullEntry.INSTANCE;
     }
@@ -3720,7 +3729,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       int size = 0;
       for (ReferenceEntry<K, V> e = head.getNextInWriteQueue();
           e != head;
@@ -3836,7 +3845,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean remove(Object o) {
+    public boolean remove(@UnknownSignedness Object o) {
       ReferenceEntry<K, V> e = (ReferenceEntry<K, V>) o;
       ReferenceEntry<K, V> previous = e.getPreviousInAccessQueue();
       ReferenceEntry<K, V> next = e.getNextInAccessQueue();
@@ -3848,7 +3857,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       ReferenceEntry<K, V> e = (ReferenceEntry<K, V>) o;
       return e.getNextInAccessQueue() != NullEntry.INSTANCE;
     }
@@ -3859,7 +3868,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       int size = 0;
       for (ReferenceEntry<K, V> e = head.getNextInAccessQueue();
           e != head;
@@ -3944,12 +3953,12 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return Ints.saturatedCast(longSize());
   }
 
   @Override
-  public @Nullable V get(@Nullable Object key) {
+  public @Nullable V get(@Nullable @UnknownSignedness Object key) {
     if (key == null) {
       return null;
     }
@@ -3976,7 +3985,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   // Only becomes available in Java 8 when it's on the interface.
   // @Override
   @Override
-  public @Nullable V getOrDefault(@Nullable Object key, @Nullable V defaultValue) {
+  public @Nullable V getOrDefault(@Nullable @UnknownSignedness Object key, @Nullable V defaultValue) {
     V result = get(key);
     return (result != null) ? result : defaultValue;
   }
@@ -3989,7 +3998,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     int hits = 0;
     int misses = 0;
 
-    Map<K, V> result = Maps.newLinkedHashMap();
+    ImmutableMap.Builder<K, V> result = ImmutableMap.builder();
     for (Object key : keys) {
       V value = get(key);
       if (value == null) {
@@ -4004,7 +4013,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
     globalStatsCounter.recordHits(hits);
     globalStatsCounter.recordMisses(misses);
-    return ImmutableMap.copyOf(result);
+    return result.buildKeepingLast();
   }
 
   ImmutableMap<K, V> getAll(Iterable<? extends K> keys) throws ExecutionException {
@@ -4029,7 +4038,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     try {
       if (!keysToLoad.isEmpty()) {
         try {
-          Map<K, V> newEntries = loadAll(keysToLoad, defaultLoader);
+          Map<K, V> newEntries = loadAll(unmodifiableSet(keysToLoad), defaultLoader);
           for (K key : keysToLoad) {
             V value = newEntries.get(key);
             if (value == null) {
@@ -4065,7 +4074,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     Map<K, V> result;
     boolean success = false;
     try {
-      @SuppressWarnings("unchecked") // safe since all keys extend K
+      @SuppressWarnings({"unchecked", "argument"}) // safe since all keys extend K
       Map<K, V> map = (Map<K, V>) loader.loadAll(keys);
       result = map;
       success = true;
@@ -4135,7 +4144,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public boolean containsKey(@Nullable Object key) {
+  public boolean containsKey(@Nullable @UnknownSignedness Object key) {
     // does not impact recency ordering
     if (key == null) {
       return false;
@@ -4145,7 +4154,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public boolean containsValue(@Nullable Object value) {
+  public boolean containsValue(@Nullable @UnknownSignedness Object value) {
     // does not impact recency ordering
     if (value == null) {
       return false;
@@ -4201,7 +4210,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public V compute(K key, BiFunction<? super K, ? super V, ? extends V> function) {
+  public V compute(K key, BiFunction<? super K, ? super @Nullable V, ? extends V> function) {
     checkNotNull(key);
     checkNotNull(function);
     int hash = hash(key);
@@ -4209,14 +4218,14 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public V computeIfAbsent(K key, Function<? super K, ? extends V> function) {
+  public @PolyNull V computeIfAbsent(K key, Function<? super K, ? extends @PolyNull V> function) {
     checkNotNull(key);
     checkNotNull(function);
     return compute(key, (k, oldValue) -> (oldValue == null) ? function.apply(key) : oldValue);
   }
 
   @Override
-  public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> function) {
+  public @PolyNull V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends @PolyNull V> function) {
     checkNotNull(key);
     checkNotNull(function);
     return compute(key, (k, oldValue) -> (oldValue == null) ? null : function.apply(k, oldValue));
@@ -4239,7 +4248,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public V remove(@Nullable Object key) {
+  public V remove(@Nullable @UnknownSignedness Object key) {
     if (key == null) {
       return null;
     }
@@ -4248,7 +4257,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   }
 
   @Override
-  public boolean remove(@Nullable Object key, @Nullable Object value) {
+  public boolean remove(@Nullable @UnknownSignedness Object key, @Nullable @UnknownSignedness Object value) {
     if (key == null || value == null) {
       return false;
     }
@@ -4292,7 +4301,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
   @RetainedWith @Nullable Set<K> keySet;
 
   @Override
-  public Set<K> keySet() {
+  public Set<@KeyFor({"this"}) K> keySet() {
     // does not impact recency ordering
     Set<K> ks = keySet;
     return (ks != null) ? ks : (keySet = new KeySet());
@@ -4311,7 +4320,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
 
   @Override
   @GwtIncompatible // Not supported.
-  public Set<Entry<K, V>> entrySet() {
+  public Set<Entry<@KeyFor({"this"}) K, V>> entrySet() {
     // does not impact recency ordering
     Set<Entry<K, V>> es = entrySet;
     return (es != null) ? es : (entrySet = new EntrySet());
@@ -4478,7 +4487,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness WriteThroughEntry this) {
       // Cannot use key and value equivalence
       return key.hashCode() ^ value.hashCode();
     }
@@ -4506,7 +4515,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
 
   abstract class AbstractCacheSet<T> extends AbstractSet<T> {
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return LocalCache.this.size();
     }
 
@@ -4524,7 +4533,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     // https://code.google.com/p/android/issues/detail?id=36519 / http://r.android.com/47508
 
     @Override
-    public Object[] toArray() {
+    public @PolySigned Object[] toArray() {
       return toArrayList(this).toArray();
     }
 
@@ -4566,19 +4575,19 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       return LocalCache.this.containsKey(o);
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@UnknownSignedness Object o) {
       return LocalCache.this.remove(o) != null;
     }
   }
 
   final class Values extends AbstractCollection<V> {
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return LocalCache.this.size();
     }
 
@@ -4604,7 +4613,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       return LocalCache.this.containsValue(o);
     }
 
@@ -4612,7 +4621,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     // https://code.google.com/p/android/issues/detail?id=36519 / http://r.android.com/47508
 
     @Override
-    public Object[] toArray() {
+    public @PolySigned Object[] toArray() {
       return toArrayList(this).toArray();
     }
 
@@ -4636,7 +4645,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       if (!(o instanceof Entry)) {
         return false;
       }
@@ -4651,7 +4660,7 @@ class LocalCache<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> 
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@UnknownSignedness Object o) {
       if (!(o instanceof Entry)) {
         return false;
       }

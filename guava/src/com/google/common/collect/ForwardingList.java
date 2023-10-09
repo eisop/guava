@@ -23,7 +23,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -55,8 +57,9 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
-@SuppressWarnings("nullness:generic.argument")
-public abstract class ForwardingList<E> extends ForwardingCollection<E> implements List<E> {
+@ElementTypesAreNonnullByDefault
+public abstract class ForwardingList<E extends @Nullable Object> extends ForwardingCollection<E>
+    implements List<E> {
   // TODO(lowasser): identify places where thread safety is actually lost
 
   /** Constructor for use by subclasses. */
@@ -66,7 +69,7 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
   protected abstract List<E> delegate();
 
   @Override
-  public void add(int index, E element) {
+  public void add(int index, @ParametricNullness E element) {
     delegate().add(index, element);
   }
 
@@ -77,19 +80,22 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
   }
 
   @Override
+  @ParametricNullness
   public E get(int index) {
     return delegate().get(index);
   }
 
   @Pure
   @Override
-  public int indexOf(@Nullable Object element) {
+  @SuppressWarnings("nullness:argument")
+  public int indexOf(@CheckForNull @UnknownSignedness Object element) {
     return delegate().indexOf(element);
   }
 
   @Pure
   @Override
-  public int lastIndexOf(@Nullable Object element) {
+  @SuppressWarnings("nullness:argument")
+  public int lastIndexOf(@CheckForNull @UnknownSignedness Object element) {
     return delegate().lastIndexOf(element);
   }
 
@@ -105,13 +111,15 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
 
   @CanIgnoreReturnValue
   @Override
+  @ParametricNullness
   public E remove(int index) {
     return delegate().remove(index);
   }
 
   @CanIgnoreReturnValue
   @Override
-  public E set(int index, E element) {
+  @ParametricNullness
+  public E set(int index, @ParametricNullness E element) {
     return delegate().set(index, element);
   }
 
@@ -123,13 +131,13 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
 
   @Pure
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull @UnknownSignedness Object object) {
     return object == this || delegate().equals(object);
   }
 
   @Pure
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness ForwardingList<E> this) {
     return delegate().hashCode();
   }
 
@@ -140,7 +148,7 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
    *
    * @since 7.0
    */
-  protected boolean standardAdd(E element) {
+  protected boolean standardAdd(@ParametricNullness E element) {
     add(size(), element);
     return true;
   }
@@ -163,7 +171,7 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
    *
    * @since 7.0
    */
-  protected int standardIndexOf(@Nullable Object element) {
+  protected int standardIndexOf(@CheckForNull Object element) {
     return Lists.indexOfImpl(this, element);
   }
 
@@ -174,7 +182,7 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
    *
    * @since 7.0
    */
-  protected int standardLastIndexOf(@Nullable Object element) {
+  protected int standardLastIndexOf(@CheckForNull Object element) {
     return Lists.lastIndexOfImpl(this, element);
   }
 
@@ -232,7 +240,7 @@ public abstract class ForwardingList<E> extends ForwardingCollection<E> implemen
    * @since 7.0
    */
   @Beta
-  protected boolean standardEquals(@Nullable Object object) {
+  protected boolean standardEquals(@CheckForNull Object object) {
     return Lists.equalsImpl(this, object);
   }
 

@@ -19,7 +19,9 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.DoNotMock;
 import java.util.Map;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -32,7 +34,8 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @DoNotMock("Use Maps.difference")
 @GwtCompatible
 @AnnotatedFor({"nullness"})
-public interface MapDifference<K, V> {
+@ElementTypesAreNonnullByDefault
+public interface MapDifference<K extends @Nullable Object, V extends @Nullable Object> {
   /**
    * Returns {@code true} if there are no differences between the two maps; that is, if the maps are
    * equal.
@@ -71,7 +74,7 @@ public interface MapDifference<K, V> {
    */
   @Pure
   @Override
-  boolean equals(@Nullable Object object);
+  boolean equals(@CheckForNull Object object);
 
   /**
    * Returns the hash code for this instance. This is defined as the hash code of
@@ -83,7 +86,7 @@ public interface MapDifference<K, V> {
    */
   @Pure
   @Override
-  int hashCode();
+  int hashCode(@UnknownSignedness MapDifference<K, V> this);
 
   /**
    * A difference between the mappings from two maps with the same key. The {@link #leftValue} and
@@ -92,11 +95,13 @@ public interface MapDifference<K, V> {
    * @since 2.0
    */
   @DoNotMock("Use Maps.difference")
-  interface ValueDifference<V> {
+  interface ValueDifference<V extends @Nullable Object> {
     /** Returns the value from the left map (possibly null). */
+    @ParametricNullness
     V leftValue();
 
     /** Returns the value from the right map (possibly null). */
+    @ParametricNullness
     V rightValue();
 
     /**
@@ -105,13 +110,13 @@ public interface MapDifference<K, V> {
      */
     @Pure
     @Override
-    boolean equals(@Nullable Object other);
+    boolean equals(@CheckForNull Object other);
 
     /**
      * The hash code equals the value {@code Arrays.asList(leftValue(), rightValue()).hashCode()}.
      */
     @Pure
     @Override
-    int hashCode();
+    int hashCode(@UnknownSignedness ValueDifference<V> this);
   }
 }

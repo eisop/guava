@@ -24,7 +24,10 @@ import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * Skeletal implementation of {@link NavigableMap}.
@@ -32,34 +35,41 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtIncompatible
-abstract class AbstractNavigableMap<K, V> extends IteratorBasedAbstractMap<K, V>
-    implements NavigableMap<K, V> {
+@ElementTypesAreNonnullByDefault
+abstract class AbstractNavigableMap<K extends @Nullable Object, V extends @Nullable Object>
+    extends IteratorBasedAbstractMap<K, V> implements NavigableMap<K, V> {
 
   @Override
-  public abstract @Nullable V get(@Nullable Object key);
+  @CheckForNull
+  public abstract V get(@CheckForNull @UnknownSignedness Object key);
 
   @Override
-  public @Nullable Entry<K, V> firstEntry() {
+  @CheckForNull
+  public Entry<K, V> firstEntry() {
     return Iterators.getNext(entryIterator(), null);
   }
 
   @Override
-  public @Nullable Entry<K, V> lastEntry() {
+  @CheckForNull
+  public Entry<K, V> lastEntry() {
     return Iterators.getNext(descendingEntryIterator(), null);
   }
 
   @Override
-  public @Nullable Entry<K, V> pollFirstEntry() {
+  @CheckForNull
+  public Entry<K, V> pollFirstEntry() {
     return Iterators.pollNext(entryIterator());
   }
 
   @Override
-  public @Nullable Entry<K, V> pollLastEntry() {
+  @CheckForNull
+  public Entry<K, V> pollLastEntry() {
     return Iterators.pollNext(descendingEntryIterator());
   }
 
   @Override
-  public K firstKey() {
+  @ParametricNullness
+  public @KeyFor("this") K firstKey() {
     Entry<K, V> entry = firstEntry();
     if (entry == null) {
       throw new NoSuchElementException();
@@ -69,7 +79,8 @@ abstract class AbstractNavigableMap<K, V> extends IteratorBasedAbstractMap<K, V>
   }
 
   @Override
-  public K lastKey() {
+  @ParametricNullness
+  public @KeyFor("this") K lastKey() {
     Entry<K, V> entry = lastEntry();
     if (entry == null) {
       throw new NoSuchElementException();
@@ -79,74 +90,82 @@ abstract class AbstractNavigableMap<K, V> extends IteratorBasedAbstractMap<K, V>
   }
 
   @Override
-  public @Nullable Entry<K, V> lowerEntry(K key) {
+  @CheckForNull
+  public Entry<K, V> lowerEntry(@ParametricNullness K key) {
     return headMap(key, false).lastEntry();
   }
 
   @Override
-  public @Nullable Entry<K, V> floorEntry(K key) {
+  @CheckForNull
+  public Entry<K, V> floorEntry(@ParametricNullness K key) {
     return headMap(key, true).lastEntry();
   }
 
   @Override
-  public @Nullable Entry<K, V> ceilingEntry(K key) {
+  @CheckForNull
+  public Entry<K, V> ceilingEntry(@ParametricNullness K key) {
     return tailMap(key, true).firstEntry();
   }
 
   @Override
-  public @Nullable Entry<K, V> higherEntry(K key) {
+  @CheckForNull
+  public Entry<K, V> higherEntry(@ParametricNullness K key) {
     return tailMap(key, false).firstEntry();
   }
 
   @Override
-  public K lowerKey(K key) {
+  @CheckForNull
+  public K lowerKey(@ParametricNullness K key) {
     return Maps.keyOrNull(lowerEntry(key));
   }
 
   @Override
-  public K floorKey(K key) {
+  @CheckForNull
+  public K floorKey(@ParametricNullness K key) {
     return Maps.keyOrNull(floorEntry(key));
   }
 
   @Override
-  public K ceilingKey(K key) {
+  @CheckForNull
+  public K ceilingKey(@ParametricNullness K key) {
     return Maps.keyOrNull(ceilingEntry(key));
   }
 
   @Override
-  public K higherKey(K key) {
+  @CheckForNull
+  public K higherKey(@ParametricNullness K key) {
     return Maps.keyOrNull(higherEntry(key));
   }
 
   abstract Iterator<Entry<K, V>> descendingEntryIterator();
 
   @Override
-  public SortedMap<K, V> subMap(K fromKey, K toKey) {
+  public SortedMap<K, V> subMap(@ParametricNullness K fromKey, @ParametricNullness K toKey) {
     return subMap(fromKey, true, toKey, false);
   }
 
   @Override
-  public SortedMap<K, V> headMap(K toKey) {
+  public SortedMap<K, V> headMap(@ParametricNullness K toKey) {
     return headMap(toKey, false);
   }
 
   @Override
-  public SortedMap<K, V> tailMap(K fromKey) {
+  public SortedMap<K, V> tailMap(@ParametricNullness K fromKey) {
     return tailMap(fromKey, true);
   }
 
   @Override
-  public NavigableSet<K> navigableKeySet() {
+  public NavigableSet<@KeyFor({"this"}) K> navigableKeySet() {
     return new Maps.NavigableKeySet<>(this);
   }
 
   @Override
-  public Set<K> keySet() {
+  public Set<@KeyFor({"this"}) K> keySet() {
     return navigableKeySet();
   }
 
   @Override
-  public NavigableSet<K> descendingKeySet() {
+  public NavigableSet<@KeyFor({"this"}) K> descendingKeySet() {
     return descendingMap().navigableKeySet();
   }
 

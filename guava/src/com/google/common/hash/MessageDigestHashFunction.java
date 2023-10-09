@@ -35,6 +35,7 @@ import java.util.Arrays;
  * @author Dimitris Andreou
  */
 @Immutable
+@ElementTypesAreNonnullByDefault
 final class MessageDigestHashFunction extends AbstractHashFunction implements Serializable {
 
   @SuppressWarnings("Immutable") // cloned before each use
@@ -44,7 +45,7 @@ final class MessageDigestHashFunction extends AbstractHashFunction implements Se
   private final boolean supportsClone;
   private final String toString;
 
-  @SuppressWarnings("lowerbound:assignment.type.incompatible")/* `prototype.getDigestLength()` returns the digest length in bytes
+  @SuppressWarnings("lowerbound:assignment") /* `prototype.getDigestLength()` returns the digest length in bytes
   ( return 0 as the default behavior).
   */
   MessageDigestHashFunction(String algorithmName, String toString) {
@@ -66,7 +67,7 @@ final class MessageDigestHashFunction extends AbstractHashFunction implements Se
 
   private static boolean supportsClone(MessageDigest digest) {
     try {
-      digest.clone();
+      Object unused = digest.clone();
       return true;
     } catch (CloneNotSupportedException e) {
       return false;
@@ -158,7 +159,7 @@ final class MessageDigestHashFunction extends AbstractHashFunction implements Se
       checkState(!done, "Cannot re-use a Hasher after calling hash() on it");
     }
 
-    @SuppressWarnings("value:argument.type.incompatible")/* `bytes` is positive, if `digest.getDigestLength()` returns
+    @SuppressWarnings("value:argument") /* `bytes` is positive, if `digest.getDigestLength()` returns
     a positive and equals to `bytes`, `digest.digest()` returns array with min length of 1.
     */
     @Override

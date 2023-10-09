@@ -46,13 +46,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * Registry of subscribers to a single event bus.
  *
  * @author Colin Decker
  */
+@ElementTypesAreNonnullByDefault
 final class SubscriberRegistry {
 
   /**
@@ -253,12 +255,12 @@ final class SubscriberRegistry {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness MethodIdentifier this) {
       return Objects.hashCode(name, parameterTypes);
     }
 
     @Override
-    public boolean equals(@Nullable Object o) {
+    public boolean equals(@CheckForNull Object o) {
       if (o instanceof MethodIdentifier) {
         MethodIdentifier ident = (MethodIdentifier) o;
         return name.equals(ident.name) && parameterTypes.equals(ident.parameterTypes);

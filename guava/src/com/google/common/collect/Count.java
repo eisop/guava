@@ -16,7 +16,8 @@ package com.google.common.collect;
 
 import com.google.common.annotations.GwtCompatible;
 import java.io.Serializable;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * A mutable value of type {@code int}, for multisets to use in tracking counts of values.
@@ -24,6 +25,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 final class Count implements Serializable {
   private int value;
 
@@ -54,12 +56,12 @@ final class Count implements Serializable {
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness Count this) {
     return value;
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(@CheckForNull Object obj) {
     return obj instanceof Count && ((Count) obj).value == value;
   }
 

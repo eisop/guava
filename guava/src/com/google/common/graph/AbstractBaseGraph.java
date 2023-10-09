@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.graph.GraphConstants.ENDPOINTS_MISMATCH;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
@@ -30,7 +29,10 @@ import com.google.common.math.IntMath;
 import com.google.common.primitives.Ints;
 import java.util.AbstractSet;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * This class provides a skeletal implementation of {@link BaseGraph}.
@@ -41,6 +43,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author James Sexton
  * @param <N> Node parameter type
  */
+@ElementTypesAreNonnullByDefault
 abstract class AbstractBaseGraph<N> implements BaseGraph<N> {
 
   /**
@@ -71,12 +74,12 @@ abstract class AbstractBaseGraph<N> implements BaseGraph<N> {
       }
 
       @Override
-      public int size() {
+      public @NonNegative int size() {
         return Ints.saturatedCast(edgeCount());
       }
 
       @Override
-      public boolean remove(Object o) {
+      public boolean remove(@CheckForNull @UnknownSignedness Object o) {
         throw new UnsupportedOperationException();
       }
 
@@ -85,7 +88,7 @@ abstract class AbstractBaseGraph<N> implements BaseGraph<N> {
       // Graph<LinkedList>.
       @SuppressWarnings("unchecked")
       @Override
-      public boolean contains(@Nullable Object obj) {
+      public boolean contains(@CheckForNull @UnknownSignedness Object obj) {
         if (!(obj instanceof EndpointPair)) {
           return false;
         }
@@ -114,31 +117,16 @@ abstract class AbstractBaseGraph<N> implements BaseGraph<N> {
               Iterators.concat(
                   Iterators.transform(
                       graph.predecessors(node).iterator(),
-                      new Function<N, EndpointPair<N>>() {
-                        @Override
-                        public EndpointPair<N> apply(N predecessor) {
-                          return EndpointPair.ordered(predecessor, node);
-                        }
-                      }),
+                      (N predecessor) -> EndpointPair.ordered(predecessor, node)),
                   Iterators.transform(
                       // filter out 'node' from successors (already covered by predecessors, above)
                       Sets.difference(graph.successors(node), ImmutableSet.of(node)).iterator(),
-                      new Function<N, EndpointPair<N>>() {
-                        @Override
-                        public EndpointPair<N> apply(N successor) {
-                          return EndpointPair.ordered(node, successor);
-                        }
-                      })));
+                      (N successor) -> EndpointPair.ordered(node, successor))));
         } else {
           return Iterators.unmodifiableIterator(
               Iterators.transform(
                   graph.adjacentNodes(node).iterator(),
-                  new Function<N, EndpointPair<N>>() {
-                    @Override
-                    public EndpointPair<N> apply(N adjacentNode) {
-                      return EndpointPair.unordered(node, adjacentNode);
-                    }
-                  }));
+                  (N adjacentNode) -> EndpointPair.unordered(node, adjacentNode)));
         }
       }
     };

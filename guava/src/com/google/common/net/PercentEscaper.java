@@ -16,9 +16,11 @@ package com.google.common.net;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.escape.UnicodeEscaper;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.IndexOrHigh;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
  * A {@code UnicodeEscaper} that escapes some set of Java characters using a UTF-8 based percent
@@ -49,8 +51,8 @@ import com.google.common.escape.UnicodeEscaper;
  * @author David Beaumont
  * @since 15.0
  */
-@Beta
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 public final class PercentEscaper extends UnicodeEscaper {
 
   // In some escapers spaces are escaped to '+'
@@ -125,7 +127,7 @@ public final class PercentEscaper extends UnicodeEscaper {
    * escaper from ~760ns to ~400ns as measured by {@link CharEscapersBenchmark}.
    */
   @Override
-  protected int nextEscapeIndex(CharSequence csq, int index, int end) {
+  protected @IndexOrHigh("#1") int nextEscapeIndex(CharSequence csq, @IndexOrHigh("#1") int index, @IndexOrHigh("#1") int end) {
     checkNotNull(csq);
     for (; index < end; index++) {
       char c = csq.charAt(index);
@@ -155,6 +157,7 @@ public final class PercentEscaper extends UnicodeEscaper {
 
   /** Escapes the given Unicode code point in UTF-8. */
   @Override
+  @CheckForNull
   protected char[] escape(int cp) {
     // We should never get negative values here but if we do it will throw an
     // IndexOutOfBoundsException, so at least it will get spotted.

@@ -19,7 +19,9 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Objects;
 import java.util.Map.Entry;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -31,24 +33,29 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
-abstract class AbstractMapEntry<K, V> implements Entry<K, V> {
+@ElementTypesAreNonnullByDefault
+abstract class AbstractMapEntry<K extends @Nullable Object, V extends @Nullable Object>
+    implements Entry<K, V> {
 
   @Pure
   @Override
+  @ParametricNullness
   public abstract K getKey();
 
   @Pure
   @Override
+  @ParametricNullness
   public abstract V getValue();
 
   @Override
-  public V setValue(V value) {
+  @ParametricNullness
+  public V setValue(@ParametricNullness V value) {
     throw new UnsupportedOperationException();
   }
 
   @Pure
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull Object object) {
     if (object instanceof Entry) {
       Entry<?, ?> that = (Entry<?, ?>) object;
       return Objects.equal(this.getKey(), that.getKey())
@@ -59,7 +66,7 @@ abstract class AbstractMapEntry<K, V> implements Entry<K, V> {
 
   @Pure
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness AbstractMapEntry<K, V> this) {
     K k = getKey();
     V v = getValue();
     return ((k == null) ? 0 : k.hashCode()) ^ ((v == null) ? 0 : v.hashCode());

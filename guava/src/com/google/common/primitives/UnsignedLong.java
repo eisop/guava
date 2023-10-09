@@ -21,9 +21,15 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Serializable;
 import java.math.BigInteger;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.Signed;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
+import org.checkerframework.checker.signedness.qual.Unsigned;
 import org.checkerframework.common.value.qual.IntRange;
+import org.checkerframework.common.value.qual.PolyValue;
+import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
  * A wrapper class for unsigned {@code long} values, supporting arithmetic operations.
@@ -39,7 +45,9 @@ import org.checkerframework.common.value.qual.IntRange;
  * @author Colin Evans
  * @since 11.0
  */
+@AnnotatedFor({"signedness"})
 @GwtCompatible(serializable = true)
+@ElementTypesAreNonnullByDefault
 public final class UnsignedLong extends Number implements Comparable<UnsignedLong>, Serializable {
 
   private static final long UNSIGNED_MASK = 0x7fffffffffffffffL;
@@ -48,9 +56,9 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
   public static final UnsignedLong ONE = new UnsignedLong(1);
   public static final UnsignedLong MAX_VALUE = new UnsignedLong(-1L);
 
-  private final long value;
+  private final @Unsigned long value;
 
-  private UnsignedLong(long value) {
+  private UnsignedLong(@Unsigned long value) {
     this.value = value;
   }
 
@@ -67,7 +75,7 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
    *
    * @since 14.0
    */
-  public static UnsignedLong fromLongBits(long bits) {
+  public static UnsignedLong fromLongBits(@Unsigned long bits) {
     // TODO(lowasser): consider caching small values, like Long.valueOf
     return new UnsignedLong(bits);
   }
@@ -91,13 +99,14 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
    * @throws IllegalArgumentException if {@code value} is negative or {@code value >= 2^64}
    */
   @CanIgnoreReturnValue
+  @SuppressWarnings("signedness:cast.unsafe") // checkArgument guarantees value fits in Unsigned long
   public static UnsignedLong valueOf(BigInteger value) {
     checkNotNull(value);
     checkArgument(
         value.signum() >= 0 && value.bitLength() <= Long.SIZE,
         "value (%s) is outside the range for an unsigned long value",
         value);
-    return fromLongBits(value.longValue());
+    return fromLongBits((@Unsigned long)value.longValue());
   }
 
   /**
@@ -175,8 +184,9 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
 
   /** Returns the value of this {@code UnsignedLong} as an {@code int}. */
   @Override
-  public int intValue() {
-    return (int) value;
+  @SuppressWarnings("cast.unsafe") // Unsigned long to Signed int is function intention
+  public @PolyValue int intValue(@PolyValue UnsignedLong this) {
+    return (@PolyValue @Signed int) value;
   }
 
   /**
@@ -187,8 +197,9 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
    * will be equal to {@code this - 2^64}.
    */
   @Override
-  public long longValue() {
-    return value;
+  @SuppressWarnings("cast.unsafe") // Unsigned long to Signed long is function intention
+  public @PolyValue long longValue(@PolyValue UnsignedLong this) {
+    return (@PolyValue @Signed long) value;
   }
 
   /**
@@ -196,13 +207,17 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
    * primitive conversion from {@code long} to {@code float}, and correctly rounded.
    */
   @Override
-  public float floatValue() {
-    @SuppressWarnings("cast")
-    float fValue = (float) (value & UNSIGNED_MASK);
-    if (value < 0) {
-      fValue += 0x1.0p63f;
+  @SuppressWarnings({
+    "signedness:comparison", // unsigned compare
+    "value:return" // bit manipulation preserves value from integral to float
+  })
+  public @PolyValue float floatValue(@PolyValue UnsignedLong this) {
+    if (value >= 0) {
+      return (float) value;
     }
-    return fValue;
+    // The top bit is set, which means that the float value is going to come from the top 24 bits.
+    // So we can ignore the bottom 8, except for rounding. See doubleValue() for more.
+    return (float) ((value >>> 1) | (value & 1)) * 2f;
   }
 
   /**
@@ -210,16 +225,24 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
    * primitive conversion from {@code long} to {@code double}, and correctly rounded.
    */
   @Override
-  public double doubleValue() {
-    @SuppressWarnings("cast")
-    double dValue = (double) (value & UNSIGNED_MASK);
-    if (value < 0) {
-      dValue += 0x1.0p63;
+  @SuppressWarnings({
+    "signedness:comparison", // unsigned compare
+    "value:return" // bit manipulation preserves value from integral to double
+  })
+  public @PolyValue double doubleValue(@PolyValue UnsignedLong this) {
+    if (value >= 0) {
+      return (double) value;
     }
-    return dValue;
+    // The top bit is set, which means that the double value is going to come from the top 53 bits.
+    // So we can ignore the bottom 11, except for rounding. We can unsigned-shift right 1, aka
+    // unsigned-divide by 2, and convert that. Then we'll get exactly half of the desired double
+    // value. But in the specific case where the bottom two bits of the original number are 01, we
+    // want to replace that with 1 in the shifted value for correct rounding.
+    return (double) ((value >>> 1) | (value & 1)) * 2.0;
   }
 
   /** Returns the value of this {@code UnsignedLong} as a {@link BigInteger}. */
+  @SuppressWarnings("signedness:comparison.unsignedlhs")
   public BigInteger bigIntegerValue() {
     BigInteger bigInt = BigInteger.valueOf(value & UNSIGNED_MASK);
     if (value < 0) {
@@ -235,12 +258,13 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
   }
 
   @Override
-  public int hashCode() {
+  @SuppressWarnings("signedness:argument")
+  public int hashCode(@UnknownSignedness UnsignedLong this) {
     return Longs.hashCode(value);
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(@CheckForNull Object obj) {
     if (obj instanceof UnsignedLong) {
       UnsignedLong other = (UnsignedLong) obj;
       return value == other.value;

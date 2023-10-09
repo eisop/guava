@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongBinaryOperator;
 import java.util.function.LongUnaryOperator;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * A map containing {@code long} values that can be atomically updated. While writes to a
@@ -55,6 +56,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 11.0
  */
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 public final class AtomicLongMap<K> implements Serializable {
   private final ConcurrentHashMap<K, Long> map;
 
@@ -262,7 +264,7 @@ public final class AtomicLongMap<K> implements Serializable {
     return map.values().stream().mapToLong(Long::longValue).sum();
   }
 
-  private transient @Nullable Map<K, Long> asMap;
+  @CheckForNull private transient Map<K, Long> asMap;
 
   /** Returns a live, read-only view of the map backing this {@code AtomicLongMap}. */
   public Map<K, Long> asMap() {
@@ -275,7 +277,7 @@ public final class AtomicLongMap<K> implements Serializable {
   }
 
   /** Returns true if this map contains a mapping for the specified key. */
-  public boolean containsKey(Object key) {
+  public boolean containsKey(@UnknownSignedness Object key) {
     return map.containsKey(key);
   }
 

@@ -15,7 +15,8 @@
 package com.google.common.collect;
 
 import com.google.common.annotations.GwtIncompatible;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * A skeletal implementation of {@code RangeSet}.
@@ -23,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 abstract class AbstractRangeSet<C extends Comparable> implements RangeSet<C> {
   AbstractRangeSet() {}
 
@@ -32,6 +34,7 @@ abstract class AbstractRangeSet<C extends Comparable> implements RangeSet<C> {
   }
 
   @Override
+  @CheckForNull
   public abstract Range<C> rangeContaining(C value);
 
   @Override
@@ -78,7 +81,7 @@ abstract class AbstractRangeSet<C extends Comparable> implements RangeSet<C> {
   public abstract boolean encloses(Range<C> otherRange);
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(@CheckForNull Object obj) {
     if (obj == this) {
       return true;
     } else if (obj instanceof RangeSet) {
@@ -89,7 +92,7 @@ abstract class AbstractRangeSet<C extends Comparable> implements RangeSet<C> {
   }
 
   @Override
-  public final int hashCode() {
+  public final int hashCode(@UnknownSignedness AbstractRangeSet<C> this) {
     return asRanges().hashCode();
   }
 

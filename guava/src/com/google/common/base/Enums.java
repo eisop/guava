@@ -25,7 +25,9 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -36,6 +38,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public final class Enums {
 
   private Enums() {}
@@ -106,8 +109,8 @@ public final class Enums {
    *
    * @since 16.0
    */
-  public static <T extends Enum<T>> Converter<String, T> stringConverter(final Class<T> enumClass) {
-    return new StringConverter<T>(enumClass);
+  public static <T extends Enum<T>> Converter<String, T> stringConverter(Class<T> enumClass) {
+    return new StringConverter<>(enumClass);
   }
 
   private static final class StringConverter<T extends Enum<T>> extends Converter<String, T>
@@ -130,7 +133,7 @@ public final class Enums {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
+    public boolean equals(@CheckForNull Object object) {
       if (object instanceof StringConverter) {
         StringConverter<?> that = (StringConverter<?>) object;
         return this.enumClass.equals(that.enumClass);
@@ -139,7 +142,7 @@ public final class Enums {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness StringConverter<T> this) {
       return enumClass.hashCode();
     }
 

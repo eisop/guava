@@ -23,11 +23,13 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedInts;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Serializable;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.LTLengthOf;
 import org.checkerframework.checker.index.qual.LengthOf;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.index.qual.SameLen;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.common.value.qual.ArrayLenRange;
 import org.checkerframework.common.value.qual.IntRange;
 import org.checkerframework.common.value.qual.MinLen;
@@ -39,6 +41,7 @@ import org.checkerframework.common.value.qual.MinLen;
  * @author Kurt Alfred Kluever
  * @since 11.0
  */
+@ElementTypesAreNonnullByDefault
 public abstract class HashCode {
   HashCode() {}
 
@@ -87,9 +90,9 @@ public abstract class HashCode {
    * @return the number of bytes written to {@code dest}
    * @throws IndexOutOfBoundsException if there is not enough room in {@code dest}
    */
-  @SuppressWarnings({"lowerbound:assignment.type.incompatible",// Since bits() return non negative value, `bits() / 8`
+  @SuppressWarnings({"lowerbound:assignment",// Since bits() return non negative value, `bits() / 8`
           //return non negative.
-          "upperbound:assignment.type.incompatible"//(1) maxLength is = `bits() / 8` if maxLength < bits() / 8.
+          "upperbound:assignment"//(1) maxLength is = `bits() / 8` if maxLength < bits() / 8.
           //Since bits() returns a positive multiple of 8, `bits() / 8 + offset - 1` < dest.length
           })
   @CanIgnoreReturnValue
@@ -256,6 +259,7 @@ public abstract class HashCode {
    * must be handed-off so as to preserve the immutability contract of {@code HashCode}.
    */
   static HashCode fromBytesNoCopy(byte @MinLen(1)[] bytes) {
+    checkArgument(bytes.length >= 1, "A HashCode must contain at least 1 byte.");
     return new BytesHashCode(bytes);
   }
 
@@ -299,6 +303,7 @@ public abstract class HashCode {
     }
 
     @Override
+    @SuppressWarnings("upperbound:array.access.unsafe.high.range")
     public long padToLong() {
       long retVal = (bytes[0] & 0xFF);
       for (int i = 1; i < Math.min(bytes.length, 8); i++) {
@@ -308,6 +313,7 @@ public abstract class HashCode {
     }
 
     @Override
+    @SuppressWarnings("upperbound:argument")
     void writeBytesToImpl(byte[] dest, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int maxLength) {
       System.arraycopy(bytes, 0, dest, offset, maxLength);
     }
@@ -318,8 +324,6 @@ public abstract class HashCode {
     }
 
     @Override
-    @SuppressWarnings("upperbound:array.access.unsafe.high")/* Since `this.bytes.length` has same length as that.getBytesInternal().length
-    ( else return false), `i` range from 0 to `this.bytes.length` is safe as indexes.*/
     boolean equalsSameBits(HashCode that) {
       // We don't use MessageDigest.isEqual() here because its contract does not guarantee
       // constant-time evaluation (no short-circuiting).
@@ -347,12 +351,11 @@ public abstract class HashCode {
    *
    * @since 15.0
    */
-  @SuppressWarnings({"upperbound:argument.type.incompatible",/* (1): `string` min length is 2 and `string.length` must be a even number.
-  Since for loop increment by two each iteration, `i` is always < `string.length - 2` */
-          "upperbound:array.access.unsafe.high",/* Since `bytes.length = string.length / 2` and `i` is incremented by 2, range 0 - string.length()
-          `i / 2` is safe as indexes. */
-          "argument.type.incompatible"//(2) Since `string.length >= 2` and `bytes.length` init is `string.length / 2`, bytes has min length of 1.
-          })
+  @SuppressWarnings({
+      "value:argument", // fromBytesNoCopy verfies bytes contains at least 1 byte
+      "index:argument", // charAt
+      "upperbound:array.access.unsafe.high",
+  })
   public static HashCode fromString(String string) {
     checkArgument(
         string.length() >= 2, "input string (%s) must have at least 2 characters", string);
@@ -387,7 +390,7 @@ public abstract class HashCode {
    * to protect against <a href="http://en.wikipedia.org/wiki/Timing_attack">timing attacks</a>.
    */
   @Override
-  public final boolean equals(@Nullable Object object) {
+  public final boolean equals(@CheckForNull Object object) {
     if (object instanceof HashCode) {
       HashCode that = (HashCode) object;
       return bits() == that.bits() && equalsSameBits(that);
@@ -401,7 +404,7 @@ public abstract class HashCode {
    * probably not what you want to use.
    */
   @Override
-  public final int hashCode() {
+  public final int hashCode(@UnknownSignedness HashCode this) {
     // If we have at least 4 bytes (32 bits), just take the first 4 bytes. Since this is
     // already a (presumably) high-quality hash code, any four bytes of it will do.
     if (bits() >= 32) {

@@ -30,7 +30,10 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -70,6 +73,10 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  * <p>A multiset uses {@link Object#equals} to determine whether two instances should be considered
  * "the same," <i>unless specified otherwise</i> by the implementation.
  *
+ * <p><b>Warning:</b> as with normal {@link Set}s, it is almost always a bad idea to modify an
+ * element (in a way that affects its {@link Object#equals} behavior) while it is contained in a
+ * multiset. Undefined behavior and bugs will result.
+ *
  * <p>Common implementations include {@link ImmutableMultiset}, {@link HashMultiset}, and {@link
  * ConcurrentHashMultiset}.
  *
@@ -78,15 +85,15 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  * {@code Multiset}, {@code AtomicLongMap} does not automatically remove zeros.
  *
  * <p>See the Guava User Guide article on <a href=
- * "https://github.com/google/guava/wiki/NewCollectionTypesExplained#multiset"> {@code
- * Multiset}</a>.
+ * "https://github.com/google/guava/wiki/NewCollectionTypesExplained#multiset">{@code Multiset}</a>.
  *
  * @author Kevin Bourrillion
  * @since 2.0
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
-public interface Multiset<E> extends Collection<E> {
+@ElementTypesAreNonnullByDefault
+public interface Multiset<E extends @Nullable Object> extends Collection<E> {
   // Query Operations
 
   /**
@@ -96,7 +103,7 @@ public interface Multiset<E> extends Collection<E> {
    * multiset, which is given by {@code entrySet().size()}.
    */
   @Override
-  int size();
+  @NonNegative int size();
 
   /**
    * Returns the number of occurrences of an element in this multiset (the <i>count</i> of the
@@ -111,7 +118,7 @@ public interface Multiset<E> extends Collection<E> {
    * @return the number of occurrences of the element in this multiset; possibly zero but never
    *     negative
    */
-  int count(@Nullable @CompatibleWith("E") Object element);
+  int count(@CompatibleWith("E") @CheckForNull Object element);
 
   // Bulk Operations
 
@@ -134,7 +141,7 @@ public interface Multiset<E> extends Collection<E> {
    *     return normally.
    */
   @CanIgnoreReturnValue
-  int add(@Nullable E element, int occurrences);
+  int add(@ParametricNullness E element, int occurrences);
 
   /**
    * Adds a single occurrence of the specified element to this multiset.
@@ -157,7 +164,7 @@ public interface Multiset<E> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean add(E element);
+  boolean add(@ParametricNullness E element);
 
   /**
    * Removes a number of occurrences of the specified element from this multiset. If the multiset
@@ -172,7 +179,7 @@ public interface Multiset<E> extends Collection<E> {
    * @throws IllegalArgumentException if {@code occurrences} is negative
    */
   @CanIgnoreReturnValue
-  int remove(@Nullable @CompatibleWith("E") Object element, int occurrences);
+  int remove(@CompatibleWith("E") @CheckForNull Object element, int occurrences);
 
   /**
    * Removes a <i>single</i> occurrence of the specified element from this multiset, if present.
@@ -188,7 +195,7 @@ public interface Multiset<E> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean remove(@Nullable Object element);
+  boolean remove(@CheckForNull @UnknownSignedness Object element);
 
   /**
    * Adds or removes the necessary occurrences of an element such that the element attains the
@@ -204,7 +211,7 @@ public interface Multiset<E> extends Collection<E> {
    *     zero instead.
    */
   @CanIgnoreReturnValue
-  int setCount(E element, int count);
+  int setCount(@ParametricNullness E element, int count);
 
   /**
    * Conditionally sets the count of an element to a new value, as described in {@link
@@ -223,7 +230,7 @@ public interface Multiset<E> extends Collection<E> {
    *     implementor may optionally return {@code true} instead.
    */
   @CanIgnoreReturnValue
-  boolean setCount(E element, int oldCount, int newCount);
+  boolean setCount(@ParametricNullness E element, int oldCount, int newCount);
 
   // Views
 
@@ -269,7 +276,7 @@ public interface Multiset<E> extends Collection<E> {
    *
    * @since 2.0
    */
-  interface Entry<E> {
+  interface Entry<E extends @Nullable Object> {
 
     /**
      * Returns the multiset element corresponding to this entry. Multiple calls to this method
@@ -277,6 +284,7 @@ public interface Multiset<E> extends Collection<E> {
      *
      * @return the element corresponding to this entry
      */
+    @ParametricNullness
     E getElement();
 
     /**
@@ -305,7 +313,7 @@ public interface Multiset<E> extends Collection<E> {
     @Pure
     @Override
     // TODO(kevinb): check this wrt TreeMultiset?
-    boolean equals(@Nullable Object o);
+    boolean equals(@CheckForNull Object o);
 
     /**
      * {@inheritDoc}
@@ -319,7 +327,7 @@ public interface Multiset<E> extends Collection<E> {
      */
     @Pure
     @Override
-    int hashCode();
+    int hashCode(@UnknownSignedness Entry<E> this);
 
     /**
      * Returns the canonical string representation of this entry, defined as follows. If the count
@@ -356,7 +364,7 @@ public interface Multiset<E> extends Collection<E> {
   @Pure
   @Override
   // TODO(kevinb): caveats about equivalence-relation?
-  boolean equals(@Nullable Object object);
+  boolean equals(@CheckForNull @UnknownSignedness Object object);
 
   /**
    * Returns the hash code for this multiset. This is defined as the sum of
@@ -370,7 +378,7 @@ public interface Multiset<E> extends Collection<E> {
    */
   @Pure
   @Override
-  int hashCode();
+  int hashCode(@UnknownSignedness Multiset<E> this);
 
   /**
    * {@inheritDoc}
@@ -405,7 +413,7 @@ public interface Multiset<E> extends Collection<E> {
    */
   @Pure
   @Override
-  boolean contains(@Nullable Object element);
+  boolean contains(@CheckForNull @UnknownSignedness Object element);
 
   /**
    * Returns {@code true} if this multiset contains at least one occurrence of each element in the

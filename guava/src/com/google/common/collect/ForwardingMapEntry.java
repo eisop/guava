@@ -21,7 +21,9 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Objects;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -50,8 +52,9 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
-@SuppressWarnings("nullness:generic.argument")
-public abstract class ForwardingMapEntry<K, V> extends ForwardingObject implements Map.Entry<K, V> {
+@ElementTypesAreNonnullByDefault
+public abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @Nullable Object>
+    extends ForwardingObject implements Map.Entry<K, V> {
   // TODO(lowasser): identify places where thread safety is actually lost
 
   /** Constructor for use by subclasses. */
@@ -62,30 +65,33 @@ public abstract class ForwardingMapEntry<K, V> extends ForwardingObject implemen
 
   @Pure
   @Override
+  @ParametricNullness
   public K getKey() {
     return delegate().getKey();
   }
 
   @Pure
   @Override
+  @ParametricNullness
   public V getValue() {
     return delegate().getValue();
   }
 
   @Override
-  public V setValue(V value) {
+  @ParametricNullness
+  public V setValue(@ParametricNullness V value) {
     return delegate().setValue(value);
   }
 
   @Pure
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull Object object) {
     return delegate().equals(object);
   }
 
   @Pure
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness ForwardingMapEntry<K, V> this) {
     return delegate().hashCode();
   }
 
@@ -96,7 +102,7 @@ public abstract class ForwardingMapEntry<K, V> extends ForwardingObject implemen
    *
    * @since 7.0
    */
-  protected boolean standardEquals(@Nullable Object object) {
+  protected boolean standardEquals(@CheckForNull Object object) {
     if (object instanceof Entry) {
       Entry<?, ?> that = (Entry<?, ?>) object;
       return Objects.equal(this.getKey(), that.getKey())

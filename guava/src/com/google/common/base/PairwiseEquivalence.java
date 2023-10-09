@@ -17,14 +17,17 @@ package com.google.common.base;
 import com.google.common.annotations.GwtCompatible;
 import java.io.Serializable;
 import java.util.Iterator;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 @GwtCompatible(serializable = true)
-final class PairwiseEquivalence<T> extends Equivalence<Iterable<T>> implements Serializable {
+@ElementTypesAreNonnullByDefault
+final class PairwiseEquivalence<E, T extends E> extends Equivalence<Iterable<T>>
+    implements Serializable {
+  final Equivalence<E> elementEquivalence;
 
-  final Equivalence<? super T> elementEquivalence;
-
-  PairwiseEquivalence(Equivalence<? super T> elementEquivalence) {
+  PairwiseEquivalence(Equivalence<E> elementEquivalence) {
     this.elementEquivalence = Preconditions.checkNotNull(elementEquivalence);
   }
 
@@ -52,9 +55,9 @@ final class PairwiseEquivalence<T> extends Equivalence<Iterable<T>> implements S
   }
 
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull Object object) {
     if (object instanceof PairwiseEquivalence) {
-      PairwiseEquivalence<?> that = (PairwiseEquivalence<?>) object;
+      PairwiseEquivalence<?, ?> that = (PairwiseEquivalence<?, ?>) object;
       return this.elementEquivalence.equals(that.elementEquivalence);
     }
 
@@ -62,7 +65,7 @@ final class PairwiseEquivalence<T> extends Equivalence<Iterable<T>> implements S
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness PairwiseEquivalence<E, T> this) {
     return elementEquivalence.hashCode() ^ 0x46a3eb07;
   }
 

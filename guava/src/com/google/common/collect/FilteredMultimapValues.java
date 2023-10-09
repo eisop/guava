@@ -25,7 +25,10 @@ import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * Implementation for {@link FilteredMultimap#values()}.
@@ -33,7 +36,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-final class FilteredMultimapValues<K, V> extends AbstractCollection<V> {
+@ElementTypesAreNonnullByDefault
+final class FilteredMultimapValues<K extends @Nullable Object, V extends @Nullable Object>
+    extends AbstractCollection<V> {
   @Weak private final FilteredMultimap<K, V> multimap;
 
   FilteredMultimapValues(FilteredMultimap<K, V> multimap) {
@@ -46,17 +51,17 @@ final class FilteredMultimapValues<K, V> extends AbstractCollection<V> {
   }
 
   @Override
-  public boolean contains(@Nullable Object o) {
+  public boolean contains(@CheckForNull @UnknownSignedness Object o) {
     return multimap.containsValue(o);
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return multimap.size();
   }
 
   @Override
-  public boolean remove(@Nullable Object o) {
+  public boolean remove(@CheckForNull @UnknownSignedness Object o) {
     Predicate<? super Entry<K, V>> entryPredicate = multimap.entryPredicate();
     for (Iterator<Entry<K, V>> unfilteredItr = multimap.unfiltered().entries().iterator();
         unfilteredItr.hasNext(); ) {

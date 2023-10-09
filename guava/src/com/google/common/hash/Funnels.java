@@ -16,12 +16,17 @@ package com.google.common.hash;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.LTLengthOf;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.common.value.qual.MinLen;
 
 /**
@@ -31,6 +36,7 @@ import org.checkerframework.common.value.qual.MinLen;
  * @since 11.0
  */
 @Beta
+@ElementTypesAreNonnullByDefault
 public final class Funnels {
   private Funnels() {}
 
@@ -43,7 +49,8 @@ public final class Funnels {
     INSTANCE;
 
     @Override
-    public void funnel(byte @MinLen(1)[] from, PrimitiveSink into) {
+    @SuppressWarnings("value:argument") // 'from' should be annotated @MinLen(1)
+    public void funnel(byte [] from, PrimitiveSink into) {
       into.putBytes(from);
     }
 
@@ -68,7 +75,7 @@ public final class Funnels {
     INSTANCE;
 
     @Override
-    public void funnel(@MinLen(1) CharSequence from, PrimitiveSink into) {
+    public void funnel(CharSequence from, PrimitiveSink into) {
       into.putUnencodedChars(from);
     }
 
@@ -96,7 +103,8 @@ public final class Funnels {
     }
 
     @Override
-    public void funnel(@MinLen(1) CharSequence from, PrimitiveSink into) {
+    @SuppressWarnings("value:argument") // 'from' should be annotated @MinLen(1)
+    public void funnel(CharSequence from, PrimitiveSink into) {
       into.putString(from, charset);
     }
 
@@ -106,7 +114,7 @@ public final class Funnels {
     }
 
     @Override
-    public boolean equals(@Nullable Object o) {
+    public boolean equals(@CheckForNull Object o) {
       if (o instanceof StringCharsetFunnel) {
         StringCharsetFunnel funnel = (StringCharsetFunnel) o;
         return this.charset.equals(funnel.charset);
@@ -115,7 +123,7 @@ public final class Funnels {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness StringCharsetFunnel this) {
       return StringCharsetFunnel.class.hashCode() ^ charset.hashCode();
     }
 
@@ -167,11 +175,13 @@ public final class Funnels {
    *
    * @since 15.0
    */
-  public static <E> Funnel<Iterable<? extends E>> sequentialFunnel(Funnel<E> elementFunnel) {
-    return new SequentialFunnel<E>(elementFunnel);
+  public static <E extends @Nullable Object> Funnel<Iterable<? extends E>> sequentialFunnel(
+      Funnel<E> elementFunnel) {
+    return new SequentialFunnel<>(elementFunnel);
   }
 
-  private static class SequentialFunnel<E> implements Funnel<Iterable<? extends E>>, Serializable {
+  private static class SequentialFunnel<E extends @Nullable Object>
+      implements Funnel<Iterable<? extends E>>, Serializable {
     private final Funnel<E> elementFunnel;
 
     SequentialFunnel(Funnel<E> elementFunnel) {
@@ -191,7 +201,7 @@ public final class Funnels {
     }
 
     @Override
-    public boolean equals(@Nullable Object o) {
+    public boolean equals(@CheckForNull Object o) {
       if (o instanceof SequentialFunnel) {
         SequentialFunnel<?> funnel = (SequentialFunnel<?>) o;
         return elementFunnel.equals(funnel.elementFunnel);
@@ -200,7 +210,7 @@ public final class Funnels {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness SequentialFunnel<E> this) {
       return SequentialFunnel.class.hashCode() ^ elementFunnel.hashCode();
     }
   }
@@ -250,18 +260,18 @@ public final class Funnels {
     }
 
     @Override
-    public void write(int b) {
+    public void write(@PolySigned int b) {
       sink.putByte((byte) b);
     }
 
-    @SuppressWarnings("override.param.invalid")//OutputStream#write() should be annotated as void write(byte @MinLen(1)[] bytes)
+    @SuppressWarnings("override.param") // OutputStream#write() should be annotated as void write(byte @MinLen(1)[] bytes)
     @Override
     public void write(byte @MinLen(1)[] bytes) {
       sink.putBytes(bytes);
     }
 
     @Override
-    public void write(byte[] bytes, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
+    public void write(@PolySigned byte[] bytes, @IndexOrHigh({"#1"}) int off, @LTLengthOf(value={"#1"}, offset={"#2 - 1"}) @NonNegative int len) throws IOException {
       sink.putBytes(bytes, off, len);
     }
 

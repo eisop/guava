@@ -17,6 +17,7 @@ package com.google.common.primitives;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
@@ -34,6 +35,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.checker.signedness.qual.Unsigned;
 import org.checkerframework.common.value.qual.IntRange;
 import org.checkerframework.common.value.qual.MinLen;
+import org.checkerframework.framework.qual.AnnotatedFor;
 import sun.misc.Unsafe;
 
 /**
@@ -51,7 +53,9 @@ import sun.misc.Unsafe;
  * @author Louis Wasserman
  * @since 1.0
  */
+@AnnotatedFor({"signedness"})
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 public final class UnsignedBytes {
   private UnsignedBytes() {}
 
@@ -60,7 +64,6 @@ public final class UnsignedBytes {
    *
    * @since 10.0
    */
-  @SuppressWarnings("cast.unsafe") // https://github.com/kelloggm/checker-framework/issues/149
   public static final @Unsigned byte MAX_POWER_OF_TWO = (byte) 0x80;
 
   /**
@@ -68,7 +71,6 @@ public final class UnsignedBytes {
    *
    * @since 13.0
    */
-  @SuppressWarnings("cast.unsafe") // https://github.com/kelloggm/checker-framework/issues/149
   public static final @Unsigned byte MAX_VALUE = (byte) 0xFF;
 
   private static final int UNSIGNED_MASK = 0xFF;
@@ -228,13 +230,14 @@ public final class UnsignedBytes {
    *     Byte#parseByte(String)})
    * @since 13.0
    */
+  @SuppressWarnings("signedness:cast") // if statement guarantees all is ok
   @Beta
   @CanIgnoreReturnValue
   public static @Unsigned byte parseUnsignedByte(String string, @IntRange(from=2, to=36) int radix) {
     int parse = Integer.parseInt(checkNotNull(string), radix);
     // We need to throw a NumberFormatException, so we have to duplicate checkedCast. =(
     if (parse >> Byte.SIZE == 0) {
-      return (byte) parse;
+      return (@Unsigned byte) parse;
     } else {
       throw new NumberFormatException("out of range: " + parse);
     }
@@ -373,8 +376,12 @@ public final class UnsignedBytes {
       }
 
       @Override
+      @SuppressWarnings({
+        "signedness:argument",       // getLong guarantees lw and rw are ok
+        "signedness:shift.unsigned"  // doing tricky math with shifts
+      })
       public int compare(@Unsigned byte[] left, @Unsigned byte[] right) {
-        final int stride = 8;
+        int stride = 8;
         int minLength = Math.min(left.length, right.length);
         int strideLimit = minLength & ~(stride - 1);
         int i;
@@ -453,9 +460,12 @@ public final class UnsignedBytes {
       try {
         Class<?> theClass = Class.forName(UNSAFE_COMPARATOR_NAME);
 
+        // requireNonNull is safe because the class is an enum.
+        Object[] constants = requireNonNull(theClass.getEnumConstants());
+
         // yes, UnsafeComparator does implement Comparator<byte[]>
         @SuppressWarnings("unchecked")
-        Comparator<@Unsigned byte[]> comparator = (Comparator<@Unsigned byte[]>) theClass.getEnumConstants()[0];
+        Comparator<@Unsigned byte[]> comparator = (Comparator<@Unsigned byte[]>) constants[0];
         return comparator;
       } catch (Throwable t) { // ensure we really catch *everything*
         return lexicographicalComparatorJavaImpl();
@@ -463,8 +473,9 @@ public final class UnsignedBytes {
     }
   }
 
+  @SuppressWarnings("signedness:cast.unsafe") // https://github.com/typetools/checker-framework/issues/5773
   private static @PolySigned byte flip(@PolySigned byte b) {
-    return (byte) (b ^ 0x80);
+    return (@PolySigned byte) (b ^ 0x80);
   }
 
   /**
@@ -483,6 +494,7 @@ public final class UnsignedBytes {
    *
    * @since 23.1
    */
+  @SuppressWarnings("signedness:argument") // sorting byte-flipped values
   public static void sort(@Unsigned byte[] array, @IndexOrHigh("#1") int fromIndex, @IndexOrHigh("#1") int toIndex) {
     checkNotNull(array);
     checkPositionIndexes(fromIndex, toIndex, array.length);
@@ -512,6 +524,7 @@ public final class UnsignedBytes {
    *
    * @since 23.1
    */
+  @SuppressWarnings("signedness:argument") // sorting byte-flipped values
   public static void sortDescending(@Unsigned byte[] array, @IndexOrHigh("#1") int fromIndex, @IndexOrHigh("#1") int toIndex) {
     checkNotNull(array);
     checkPositionIndexes(fromIndex, toIndex, array.length);
