@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -34,10 +36,11 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
-public final class HashMultiset<E> extends AbstractMapBasedMultiset<E> {
+@ElementTypesAreNonnullByDefault
+public final class HashMultiset<E extends @Nullable Object> extends AbstractMapBasedMultiset<E> {
 
   /** Creates a new, empty {@code HashMultiset} using the default initial capacity. */
-  public static <E> HashMultiset<E> create() {
+  public static <E extends @Nullable Object> HashMultiset<E> create() {
     return new HashMultiset<E>();
   }
 
@@ -48,7 +51,7 @@ public final class HashMultiset<E> extends AbstractMapBasedMultiset<E> {
    * @param distinctElements the expected number of distinct elements
    * @throws IllegalArgumentException if {@code distinctElements} is negative
    */
-  public static <E> HashMultiset<E> create(int distinctElements) {
+  public static <E extends @Nullable Object> HashMultiset<E> create(int distinctElements) {
     return new HashMultiset<E>(distinctElements);
   }
 
@@ -59,7 +62,8 @@ public final class HashMultiset<E> extends AbstractMapBasedMultiset<E> {
    *
    * @param elements the elements that the multiset should contain
    */
-  public static <E> HashMultiset<E> create(Iterable<? extends E> elements) {
+  public static <E extends @Nullable Object> HashMultiset<E> create(
+      Iterable<? extends E> elements) {
     HashMultiset<E> multiset = create(Multisets.inferDistinctElements(elements));
     Iterables.addAll(multiset, elements);
     return multiset;
@@ -95,10 +99,10 @@ public final class HashMultiset<E> extends AbstractMapBasedMultiset<E> {
   private static final long serialVersionUID = 0;
 
 @Override
-public boolean contains(@Nullable Object arg0) { return super.contains(arg0); }
+public boolean contains(@Nullable @UnknownSignedness Object arg0) { return super.contains(arg0); }
 
 @Override
-public int count(@Nullable Object arg0) { return super.count(arg0); }
+public @NonNegative int count(@Nullable @UnknownSignedness Object arg0) { return super.count(arg0); }
 
 @Override
 public int remove(@Nullable Object arg0, int arg1) { return super.remove(arg0, arg1); }

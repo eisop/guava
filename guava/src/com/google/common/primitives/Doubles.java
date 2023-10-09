@@ -36,18 +36,22 @@ import java.util.List;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.HasSubsequence;
 import org.checkerframework.checker.index.qual.IndexFor;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.IndexOrLow;
 import org.checkerframework.checker.index.qual.LTEqLengthOf;
 import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.index.qual.SubstringIndexFor;
-import org.checkerframework.checker.index.qual.HasSubsequence;
-import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.Signed;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.common.value.qual.MinLen;
+import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
  * Static utility methods pertaining to {@code double} primitives, that are not already found in
@@ -59,7 +63,9 @@ import org.checkerframework.common.value.qual.MinLen;
  * @author Kevin Bourrillion
  * @since 1.0
  */
+@AnnotatedFor({"signedness"})
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public final class Doubles extends DoublesMethodsForWeb {
   private Doubles() {}
 
@@ -170,7 +176,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    * @param array the array to search for the sequence {@code target}
    * @param target the array to search for as a sub-sequence of {@code array}
    */
-  @SuppressWarnings("substringindex:return.type.incompatible") // https://github.com/kelloggm/checker-framework/issues/206 https://github.com/kelloggm/checker-framework/issues/207 https://github.com/kelloggm/checker-framework/issues/208
+  @SuppressWarnings("substringindex:return") // https://github.com/kelloggm/checker-framework/issues/206, 207 and 208
   public static @LTEqLengthOf("#1") @SubstringIndexFor(value = "#1", offset="#2.length - 1") int indexOf(double[] array, double[] target) {
     checkNotNull(array, "array");
     checkNotNull(target, "target");
@@ -291,7 +297,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    * pos is increased the same way as length, so pos points to a valid
    * range of length array.length in result.
    */
-  @SuppressWarnings("upperbound:argument.type.incompatible") // sum of lengths
+  @SuppressWarnings("upperbound:argument") // sum of lengths
   public static double[] concat(double[]... arrays) {
     int length = 0;
     for (double[] array : arrays) {
@@ -553,7 +559,10 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @SuppressWarnings(
-            "index") // these three fields need to be initialized in some order, and any ordering leads to the first two issuing errors - since each field is dependent on at least one of the others
+        "index" // these three fields need to be initialized in some order, and any ordering
+    // leads to the first two issuing errors - since each field is dependent on
+    // at least one of the others
+    )
     DoubleArrayAsList(double @MinLen(1)[] array, @IndexFor("#1") @LessThan("#3") int start, @IndexOrHigh("#1") int end) {
       this.array = array;
       this.start = start;
@@ -582,16 +591,14 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public boolean contains(Object target) {
+    public boolean contains(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Double)
           && Doubles.indexOf(array, (Double) target, start, end) != -1;
     }
 
     @Override
-    @SuppressWarnings(
-            "lowerbound:return.type.incompatible") // needs https://github.com/kelloggm/checker-framework/issues/227 on static indexOf method
-    public @IndexOrLow("this") int indexOf(Object target) {
+    public @IndexOrLow("this") int indexOf(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Double) {
         int i = Doubles.indexOf(array, (Double) target, start, end);
@@ -603,9 +610,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    @SuppressWarnings(
-            "lowerbound:return.type.incompatible") // needs https://github.com/kelloggm/checker-framework/issues/227 on static indexOf method
-    public @IndexOrLow("this")int lastIndexOf(Object target) {
+    public @IndexOrLow("this")int lastIndexOf(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Double) {
         int i = Doubles.lastIndexOf(array, (Double) target, start, end);
@@ -637,7 +642,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
+    public boolean equals(@CheckForNull @UnknownSignedness Object object) {
       if (object == this) {
         return true;
       }
@@ -658,7 +663,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness DoubleArrayAsList this) {
       int result = 1;
       for (int i = start; i < end; i++) {
         result = 31 * result + Doubles.hashCode(array[i]);
@@ -736,7 +741,8 @@ public final class Doubles extends DoublesMethodsForWeb {
    */
   @Beta
   @GwtIncompatible // regular expressions
-  public static @Nullable Double tryParse(String string) {
+  @CheckForNull
+  public static Double tryParse(String string) {
     if (FLOATING_POINT_PATTERN.matcher(string).matches()) {
       // TODO(lowasser): could be potentially optimized, but only with
       // extensive testing

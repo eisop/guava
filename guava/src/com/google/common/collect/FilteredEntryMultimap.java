@@ -33,7 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * Implementation of {@link Multimaps#filterEntries(Multimap, Predicate)}.
@@ -42,7 +45,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements FilteredMultimap<K, V> {
+@ElementTypesAreNonnullByDefault
+class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Object>
+    extends AbstractMultimap<K, V> implements FilteredMultimap<K, V> {
   final Multimap<K, V> unfiltered;
   final Predicate<? super Entry<K, V>> predicate;
 
@@ -66,24 +71,24 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
     return entries().size();
   }
 
-  private boolean satisfies(K key, V value) {
+  private boolean satisfies(@ParametricNullness K key, @ParametricNullness V value) {
     return predicate.apply(Maps.immutableEntry(key, value));
   }
 
   final class ValuePredicate implements Predicate<V> {
-    private final K key;
+    @ParametricNullness private final K key;
 
-    ValuePredicate(K key) {
+    ValuePredicate(@ParametricNullness K key) {
       this.key = key;
     }
 
     @Override
-    public boolean apply(@Nullable V value) {
+    public boolean apply(@ParametricNullness V value) {
       return satisfies(key, value);
     }
   }
 
-  static <E> Collection<E> filterCollection(
+  static <E extends @Nullable Object> Collection<E> filterCollection(
       Collection<E> collection, Predicate<? super E> predicate) {
     if (collection instanceof Set) {
       return Sets.filter((Set<E>) collection, predicate);
@@ -93,12 +98,12 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
   }
 
   @Override
-  public boolean containsKey(@Nullable Object key) {
+  public boolean containsKey(@CheckForNull @UnknownSignedness Object key) {
     return asMap().get(key) != null;
   }
 
   @Override
-  public Collection<V> removeAll(@Nullable Object key) {
+  public Collection<V> removeAll(@CheckForNull Object key) {
     return MoreObjects.firstNonNull(asMap().remove(key), unmodifiableEmptyCollection());
   }
 
@@ -115,7 +120,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
   }
 
   @Override
-  public Collection<V> get(final K key) {
+  public Collection<V> get(@ParametricNullness K key) {
     return filterCollection(unfiltered.get(key), new ValuePredicate(key));
   }
 
@@ -166,7 +171,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
   @WeakOuter
   class AsMap extends ViewCachingAbstractMap<K, Collection<V>> {
     @Override
-    public boolean containsKey(@Nullable Object key) {
+    public boolean containsKey(@CheckForNull @UnknownSignedness Object key) {
       return get(key) != null;
     }
 
@@ -176,7 +181,8 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
     }
 
     @Override
-    public Collection<V> get(@Nullable Object key) {
+    @CheckForNull
+    public Collection<V> get(@CheckForNull @UnknownSignedness Object key) {
       Collection<V> result = unfiltered.asMap().get(key);
       if (result == null) {
         return null;
@@ -188,7 +194,8 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
     }
 
     @Override
-    public Collection<V> remove(@Nullable Object key) {
+    @CheckForNull
+    public Collection<V> remove(@CheckForNull @UnknownSignedness Object key) {
       Collection<V> collection = unfiltered.asMap().get(key);
       if (collection == null) {
         return null;
@@ -232,7 +239,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
         }
 
         @Override
-        public boolean remove(@Nullable Object o) {
+        public boolean remove(@CheckForNull @UnknownSignedness Object o) {
           return AsMap.this.remove(o) != null;
         }
       }
@@ -255,6 +262,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
                 unfiltered.asMap().entrySet().iterator();
 
             @Override
+            @CheckForNull
             protected Entry<K, Collection<V>> computeNext() {
               while (backingIterator.hasNext()) {
                 Entry<K, Collection<V>> entry = backingIterator.next();
@@ -281,7 +289,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
         }
 
         @Override
-        public int size() {
+        public @NonNegative int size() {
           return Iterators.size(iterator());
         }
       }
@@ -297,7 +305,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
         }
 
         @Override
-        public boolean remove(@Nullable Object o) {
+        public boolean remove(@CheckForNull @UnknownSignedness Object o) {
           if (o instanceof Collection) {
             Collection<?> c = (Collection<?>) o;
             Iterator<Entry<K, Collection<V>>> entryIterator =
@@ -346,7 +354,7 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
     }
 
     @Override
-    public int remove(@Nullable Object key, int occurrences) {
+    public int remove(@CheckForNull Object key, int occurrences) {
       checkNonnegative(occurrences, "occurrences");
       if (occurrences == 0) {
         return count(key);
@@ -386,19 +394,15 @@ class FilteredEntryMultimap<K, V> extends AbstractMultimap<K, V> implements Filt
         }
 
         @Override
-        public int size() {
+        public @NonNegative int size() {
           return FilteredEntryMultimap.this.keySet().size();
         }
 
-        private boolean removeEntriesIf(final Predicate<? super Multiset.Entry<K>> predicate) {
+        private boolean removeEntriesIf(Predicate<? super Multiset.Entry<K>> predicate) {
           return FilteredEntryMultimap.this.removeEntriesIf(
-              new Predicate<Map.Entry<K, Collection<V>>>() {
-                @Override
-                public boolean apply(Map.Entry<K, Collection<V>> entry) {
-                  return predicate.apply(
-                      Multisets.immutableEntry(entry.getKey(), entry.getValue().size()));
-                }
-              });
+              (Map.Entry<K, Collection<V>> entry) ->
+                  predicate.apply(
+                      Multisets.immutableEntry(entry.getKey(), entry.getValue().size())));
         }
 
         @Override

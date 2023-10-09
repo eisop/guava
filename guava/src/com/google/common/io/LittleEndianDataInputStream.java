@@ -30,6 +30,7 @@ import java.io.InputStream;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.LTLengthOf;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
  * An implementation of {@link DataInput} that uses little-endian byte ordering for reading {@code
@@ -42,8 +43,10 @@ import org.checkerframework.checker.index.qual.NonNegative;
  * @author Keith Bottner
  * @since 8.0
  */
+@AnnotatedFor({"signedness"})
 @Beta
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 public final class LittleEndianDataInputStream extends FilterInputStream implements DataInput {
 
   /**
@@ -99,7 +102,7 @@ public final class LittleEndianDataInputStream extends FilterInputStream impleme
    */
   @CanIgnoreReturnValue // to skip some bytes
   @Override
-  @SuppressWarnings("return.type.incompatible") // The integer returned has its first bit equal to 0.
+  @SuppressWarnings("index:return") // The integer returned has its first bit equal to 0.
   public @NonNegative int readUnsignedShort() throws IOException {
     byte b1 = readAndCheckByte();
     byte b2 = readAndCheckByte();

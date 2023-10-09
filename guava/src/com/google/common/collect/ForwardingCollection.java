@@ -21,7 +21,12 @@ import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
 import java.util.Iterator;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -49,8 +54,9 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
-@SuppressWarnings("nullness:generic.argument")
-public abstract class ForwardingCollection<E> extends ForwardingObject implements Collection<E> {
+@ElementTypesAreNonnullByDefault
+public abstract class ForwardingCollection<E extends @Nullable Object> extends ForwardingObject
+    implements Collection<E> {
   // TODO(lowasser): identify places where thread safety is actually lost
 
   /** Constructor for use by subclasses. */
@@ -66,7 +72,7 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
 
   @Pure
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return delegate().size();
   }
 
@@ -84,26 +90,26 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
 
   @Pure
   @Override
-  public boolean contains(@Nullable Object object) {
+  @SuppressWarnings("nullness:argument")
+  public boolean contains(@CheckForNull @UnknownSignedness Object object) {
     return delegate().contains(object);
   }
 
   @CanIgnoreReturnValue
   @Override
-  public boolean add(E element) {
+  public boolean add(@ParametricNullness E element) {
     return delegate().add(element);
   }
 
   @CanIgnoreReturnValue
   @Override
-  @SuppressWarnings("nullness") // Suppressed due to the annotations on ConcurrentMap
-  public boolean remove(@Nullable Object object) {
+  @SuppressWarnings("nullness:argument")
+  public boolean remove(@CheckForNull @UnknownSignedness Object object) {
     return delegate().remove(object);
   }
 
   @Pure
   @Override
-  @SuppressWarnings("nullness") // Suppressed due to the containsAll method in Collection
   public boolean containsAll(Collection<?> collection) {
     return delegate().containsAll(collection);
   }
@@ -116,7 +122,6 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
 
   @CanIgnoreReturnValue
   @Override
-  @SuppressWarnings("nullness") // Suppressed due to the containsAll method in Collection
   public boolean retainAll(Collection<?> collection) {
     return delegate().retainAll(collection);
   }
@@ -127,15 +132,14 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
   }
 
   @Override
-  @SuppressWarnings("nullness") // Suppressed due to annotations of toArray
-  public @Nullable Object[] toArray() {
+  public @PolyNull @PolySigned Object[] toArray(ForwardingCollection<@PolyNull @PolySigned E> this) {
     return delegate().toArray();
   }
 
   @CanIgnoreReturnValue
   @Override
-  @SuppressWarnings("nullness")
-  public <T> T[] toArray(T[] array) {
+  @SuppressWarnings("nullness:return")
+  public <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] array) {
     return delegate().toArray(array);
   }
 
@@ -146,7 +150,7 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
    *
    * @since 7.0
    */
-  protected boolean standardContains(@Nullable Object object) {
+  protected boolean standardContains(@CheckForNull Object object) {
     return Iterators.contains(iterator(), object);
   }
 
@@ -178,7 +182,7 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
    *
    * @since 7.0
    */
-  protected boolean standardRemove(@Nullable Object object) {
+  protected boolean standardRemove(@CheckForNull Object object) {
     Iterator<E> iterator = iterator();
     while (iterator.hasNext()) {
       if (Objects.equal(iterator.next(), object)) {
@@ -251,8 +255,8 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
    *
    * @since 7.0
    */
-  protected Object[] standardToArray() {
-    Object[] newArray = new Object[size()];
+  protected @Nullable Object[] standardToArray() {
+    @Nullable Object[] newArray = new @Nullable Object[size()];
     return toArray(newArray);
   }
 
@@ -263,7 +267,7 @@ public abstract class ForwardingCollection<E> extends ForwardingObject implement
    *
    * @since 7.0
    */
-  protected <T> T[] standardToArray(T[] array) {
+  protected <T extends @Nullable Object> T[] standardToArray(T[] array) {
     return ObjectArrays.toArrayImpl(this, array);
   }
 }

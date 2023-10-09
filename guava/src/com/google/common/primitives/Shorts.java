@@ -31,19 +31,24 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.RandomAccess;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.HasSubsequence;
 import org.checkerframework.checker.index.qual.IndexFor;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.IndexOrLow;
 import org.checkerframework.checker.index.qual.LTEqLengthOf;
 import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.index.qual.SubstringIndexFor;
-import org.checkerframework.checker.index.qual.HasSubsequence;
-import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.Signed;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.common.value.qual.IntRange;
 import org.checkerframework.common.value.qual.MinLen;
+import org.checkerframework.framework.qual.AnnotatedFor;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * Static utility methods pertaining to {@code short} primitives, that are not already found in
@@ -55,7 +60,9 @@ import org.checkerframework.common.value.qual.MinLen;
  * @author Kevin Bourrillion
  * @since 1.0
  */
+@AnnotatedFor({"signedness"})
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public final class Shorts extends ShortsMethodsForWeb {
   private Shorts() {}
 
@@ -181,7 +188,7 @@ public final class Shorts extends ShortsMethodsForWeb {
    * @param array the array to search for the sequence {@code target}
    * @param target the array to search for as a sub-sequence of {@code array}
    */
-  @SuppressWarnings("substringindex:return.type.incompatible") // https://github.com/kelloggm/checker-framework/issues/206 https://github.com/kelloggm/checker-framework/issues/207 https://github.com/kelloggm/checker-framework/issues/208
+  @SuppressWarnings("substringindex:return") // https://github.com/kelloggm/checker-framework/issues/206, 207 and 208
   public static @LTEqLengthOf("#1") @SubstringIndexFor(value = "#1", offset="#2.length - 1") int indexOf(short[] array, short[] target) {
     checkNotNull(array, "array");
     checkNotNull(target, "target");
@@ -298,7 +305,7 @@ public final class Shorts extends ShortsMethodsForWeb {
    * pos is increased the same way as length, so pos points to a valid
    * range of length array.length in result.
    */
-  @SuppressWarnings("upperbound:argument.type.incompatible") // sum of lengths
+  @SuppressWarnings("upperbound:argument") // sum of lengths
   public static short[] concat(short[]... arrays) {
     int length = 0;
     for (short[] array : arrays) {
@@ -578,6 +585,8 @@ public final class Shorts extends ShortsMethodsForWeb {
     return new ShortArrayAsList(backingArray);
   }
 
+  @CFComment({"signedness: A non-generic container class permits only signed values.",
+              "Clients must suppress warnings when storing unsigned values."})
   @GwtCompatible
   private static class ShortArrayAsList extends AbstractList<Short>
       implements RandomAccess, Serializable {
@@ -591,7 +600,10 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @SuppressWarnings(
-            "index") // these three fields need to be initialized in some order, and any ordering leads to the first two issuing errors - since each field is dependent on at least one of the others
+        "index" // these three fields need to be initialized in some order, and any ordering
+    // leads to the first two issuing errors - since each field is dependent on
+    // at least one of the others
+    )
     ShortArrayAsList(short @MinLen(1)[] array, @IndexFor("#1") @LessThan("#3") int start, @IndexOrHigh("#1") int end) {
       this.array = array;
       this.start = start;
@@ -615,19 +627,18 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    public boolean contains(@Nullable Object target) {
+    @SuppressWarnings("signedness:cast.unsafe") // non-generic container class
+    public boolean contains(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
-      return (target instanceof Short) && Shorts.indexOf(array, (Short) target, start, end) != -1;
+      return (target instanceof Short) && Shorts.indexOf(array, (@Signed Short) target, start, end) != -1;
     }
 
-
     @Override
-    @SuppressWarnings(
-            "lowerbound") // needs https://github.com/kelloggm/checker-framework/issues/227 on static indexOf method
-    public @IndexOrLow("this") int indexOf(@Nullable Object target) {
+    @SuppressWarnings("signedness:cast.unsafe") // non-generic container class
+    public @IndexOrLow("this") int indexOf(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Short) {
-        int i = Shorts.indexOf(array, (Short) target, start, end);
+        int i = Shorts.indexOf(array, (@Signed Short) target, start, end);
         if (i >= 0) {
           return i - start;
         }
@@ -636,12 +647,11 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    @SuppressWarnings(
-            "lowerbound:return.type.incompatible") // needs https://github.com/kelloggm/checker-framework/issues/227 on static lastIndexOf method
-    public @IndexOrLow("this") int lastIndexOf(@Nullable Object target) {
+    @SuppressWarnings("signedness:cast.unsafe") // non-generic container class
+    public @IndexOrLow("this") int lastIndexOf(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Short) {
-        int i = Shorts.lastIndexOf(array, (Short) target, start, end);
+        int i = Shorts.lastIndexOf(array, (@Signed Short) target, start, end);
         if (i >= 0) {
           return i - start;
         }
@@ -670,7 +680,7 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
+    public boolean equals(@CheckForNull @UnknownSignedness Object object) {
       if (object == this) {
         return true;
       }
@@ -691,7 +701,7 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness ShortArrayAsList this) {
       int result = 1;
       for (int i = start; i < end; i++) {
         result = 31 * result + Shorts.hashCode(array[i]);

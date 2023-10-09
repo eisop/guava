@@ -44,6 +44,7 @@ import org.checkerframework.common.value.qual.MinLen;
  * @author Kyle Maddison
  * @author Geoff Pike
  */
+@ElementTypesAreNonnullByDefault
 final class FarmHashFingerprint64 extends AbstractNonStreamingHashFunction {
   static final HashFunction FARMHASH_FINGERPRINT_64 = new FarmHashFingerprint64();
 
@@ -84,10 +85,12 @@ final class FarmHashFingerprint64 extends AbstractNonStreamingHashFunction {
     }
   }
 
+  @SuppressWarnings("signedness:shift.unsigned")
   private static long shiftMix(long val) {
     return val ^ (val >>> 47);
   }
 
+  @SuppressWarnings("signedness:shift.unsigned")
   private static long hashLength16(long u, long v, long mul) {
     long a = (u ^ v) * mul;
     a ^= (a >>> 47);
@@ -119,12 +122,6 @@ final class FarmHashFingerprint64 extends AbstractNonStreamingHashFunction {
     output[1] = seedB + c;
   }
 
-  @SuppressWarnings({"lowerbound:argument.type.incompatible",//(1): if length >= 8 and offset is non negative, offset + length - 8 >= 0.
-          "upperbound:argument.type.incompatible",//(2): if length >= 4 and offset + length - 1 < bytes.length, offset + 4 - 1 < bytes.length.
-          "upperbound:array.access.unsafe.high",/*(3): if 0 < length < 4, therefore offset + length - 1 < bytes.length,
-          offset + length / 2(length >> 2) - 1 < bytes.length and offset + length - 1 - 1 < bytes.length.
-          */
-  })
   private static long hashLength0to16(byte[] bytes, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @IntRange(from = 0, to = 16) @LTLengthOf(value = "#1", offset = "#2 - 1") int length) {
     if (length >= 8) {
       long mul = K2 + length * 2;
@@ -150,9 +147,6 @@ final class FarmHashFingerprint64 extends AbstractNonStreamingHashFunction {
     return K2;
   }
 
-  @SuppressWarnings(value = {"lowerbound:argument.type.incompatible"/*(1): if 17 <= length <= 32 and offset is non negative,
-          offset + length - 8 >= 0 and offset + length - 16 >= 0.
-          */})
   private static long hashLength17to32(byte[] bytes, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @IntRange(from = 17, to = 32) @LTLengthOf(value = "#1", offset = "#2 - 1") int length) {
     long mul = K2 + length * 2;
     long a = load64(bytes, offset) * K1;
@@ -182,15 +176,8 @@ final class FarmHashFingerprint64 extends AbstractNonStreamingHashFunction {
   /*
    * Compute an 8-byte hash of a byte array of length greater than 64 bytes.
    */
-  @SuppressWarnings({"lowerbound:assignment.type.incompatible",/*(1): since length >= 65, `end` is non negative,
-  therefore `last64offset` is also non negative. */
-          "upperbound:assignment.type.incompatible",//(1): ?
-          "upperbound:compound.assignment.type.incompatible"/*(2): if length >= 65 and offset < bytes.length - length + 1,
-          offset += 64 < bytes.length.
-          */
-  })
   private static long hashLength65Plus(byte[] bytes, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int offset, @IntRange(from = 65) @LTLengthOf(value = "#1", offset = "#2 - 1") int length) {
-    final int seed = 81;
+    int seed = 81;
     // For strings over 64 bytes we loop. Internal state consists of 56 bytes: v, w, x, y, and z.
     long x = seed;
     @SuppressWarnings("ConstantOverflow")

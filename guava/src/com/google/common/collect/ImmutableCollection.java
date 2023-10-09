@@ -32,8 +32,12 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Predicate;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -158,7 +162,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  * <h3>See also</h3>
  *
  * <p>See the Guava User Guide article on <a href=
- * "https://github.com/google/guava/wiki/ImmutableCollectionsExplained"> immutable collections</a>.
+ * "https://github.com/google/guava/wiki/ImmutableCollectionsExplained">immutable collections</a>.
  *
  * @since 2.0
  */
@@ -166,6 +170,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @DoNotMock("Use ImmutableList.of or another implementation")
 @GwtCompatible(emulated = true)
 @SuppressWarnings("serial") // we're overriding default serialization
+@ElementTypesAreNonnullByDefault
 // TODO(kevinb): I think we should push everything down to "BaseImmutableCollection" or something,
 // just to do everything we can to emphasize the "practically an interface" nature of this class.
 public abstract class ImmutableCollection<E extends @NonNull Object> extends AbstractCollection<E> implements Serializable {
@@ -191,13 +196,26 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
   private static final Object[] EMPTY_ARRAY = {};
 
   @Override
-  public final @Nullable Object[] toArray() {
+  public final @PolyNull @PolySigned Object[] toArray() {
     return toArray(EMPTY_ARRAY);
   }
 
   @CanIgnoreReturnValue
   @Override
-  public final <T> @Nullable T[] toArray(T[] other) {
+  /*
+   * This suppression is here for two reasons:
+   *
+   * 1. b/192354773 in our checker affects toArray declarations.
+   *
+   * 2. `other[size] = null` is unsound. We could "fix" this by requiring callers to pass in an
+   * array with a nullable element type. But probably they usually want an array with a non-nullable
+   * type. That said, we could *accept* a `@Nullable T[]` (which, given that we treat arrays as
+   * covariant, would still permit a plain `T[]`) and return a plain `T[]`. But of course that would
+   * require its own suppression, since it is also unsound. toArray(T[]) is just a mess from a
+   * nullness perspective. The signature below at least has the virtue of being relatively simple.
+   */
+  @SuppressWarnings({"nullness:return", "nullness:assignment"})
+  public final <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] other) {
     checkNotNull(other);
     int size = size();
 
@@ -215,7 +233,8 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
   }
 
   /** If this collection is backed by an array of its elements in insertion order, returns it. */
-  Object @Nullable [] internalArray() {
+  @CheckForNull
+  Object[] internalArray() {
     return null;
   }
 
@@ -237,7 +256,7 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
 
   @Pure
   @Override
-  public abstract boolean contains(@Nullable Object object);
+  public abstract boolean contains(@CheckForNull @UnknownSignedness Object object);
 
   /**
    * Guaranteed to throw an exception and leave the collection unmodified.
@@ -263,7 +282,7 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  public final boolean remove(@Nullable Object object) {
+  public final boolean remove(@CheckForNull @UnknownSignedness Object object) {
     throw new UnsupportedOperationException();
   }
 
@@ -369,7 +388,7 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
    * offset. Returns {@code offset + size()}.
    */
   @CanIgnoreReturnValue
-  int copyIntoArray(Object[] dst, int offset) {
+  int copyIntoArray(@Nullable Object[] dst, int offset) {
     for (E e : this) {
       dst[offset++] = e;
     }

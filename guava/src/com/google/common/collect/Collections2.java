@@ -19,6 +19,7 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
@@ -37,7 +38,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.Signed;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -56,6 +63,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 public final class Collections2 {
   private Collections2() {}
 
@@ -86,7 +94,8 @@ public final class Collections2 {
    */
   // TODO(kevinb): how can we omit that Iterables link when building gwt
   // javadoc?
-  public static <E> Collection<E> filter(Collection<E> unfiltered, Predicate<? super E> predicate) {
+  public static <E extends @Nullable Object> Collection<E> filter(
+      Collection<E> unfiltered, Predicate<? super E> predicate) {
     if (unfiltered instanceof FilteredCollection) {
       // Support clear(), removeAll(), and retainAll() when filtering a filtered
       // collection.
@@ -100,7 +109,7 @@ public final class Collections2 {
    * Delegates to {@link Collection#contains}. Returns {@code false} if the {@code contains} method
    * throws a {@code ClassCastException} or {@code NullPointerException}.
    */
-  static boolean safeContains(Collection<?> collection, @Nullable Object object) {
+  static boolean safeContains(Collection<?> collection, @CheckForNull @UnknownSignedness Object object) {
     checkNotNull(collection);
     try {
       return collection.contains(object);
@@ -113,7 +122,7 @@ public final class Collections2 {
    * Delegates to {@link Collection#remove}. Returns {@code false} if the {@code remove} method
    * throws a {@code ClassCastException} or {@code NullPointerException}.
    */
-  static boolean safeRemove(Collection<?> collection, @Nullable Object object) {
+  static boolean safeRemove(Collection<?> collection, @CheckForNull Object object) {
     checkNotNull(collection);
     try {
       return collection.remove(object);
@@ -122,7 +131,7 @@ public final class Collections2 {
     }
   }
 
-  static class FilteredCollection<E> extends AbstractCollection<E> {
+  static class FilteredCollection<E extends @Nullable Object> extends AbstractCollection<E> {
     final Collection<E> unfiltered;
     final Predicate<? super E> predicate;
 
@@ -137,7 +146,7 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean add(E element) {
+    public boolean add(@ParametricNullness E element) {
       checkArgument(predicate.apply(element));
       return unfiltered.add(element);
     }
@@ -157,7 +166,7 @@ public final class Collections2 {
 
     @Pure
     @Override
-    public boolean contains(@Nullable Object element) {
+    public boolean contains(@CheckForNull @UnknownSignedness Object element) {
       if (safeContains(unfiltered, element)) {
         @SuppressWarnings("unchecked") // element is in unfiltered, so it must be an E
         E e = (E) element;
@@ -200,7 +209,7 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean remove(@Nullable Object element) {
+    public boolean remove(@CheckForNull @UnknownSignedness Object element) {
       return contains(element) && unfiltered.remove(element);
     }
 
@@ -222,7 +231,7 @@ public final class Collections2 {
 
     @Pure
     @Override
-    public int size() {
+    public @NonNegative int size() {
       int size = 0;
       for (E e : unfiltered) {
         if (predicate.apply(e)) {
@@ -233,13 +242,14 @@ public final class Collections2 {
     }
 
     @Override
-    public Object[] toArray() {
+    public @PolyNull @PolySigned Object[] toArray(FilteredCollection<@PolyNull @PolySigned E> this) {
       // creating an ArrayList so filtering happens once
       return Lists.newArrayList(iterator()).toArray();
     }
 
     @Override
-    public <T> T[] toArray(T[] array) {
+    @SuppressWarnings("nullness:return")
+    public <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] array) {
       return Lists.newArrayList(iterator()).toArray(array);
     }
 
@@ -267,12 +277,13 @@ public final class Collections2 {
    *
    * <p><b>{@code Stream} equivalent:</b> {@link java.util.stream.Stream#map Stream.map}.
    */
-  public static <F, T> Collection<T> transform(
+  public static <F extends @Nullable Object, T extends @Nullable Object> Collection<T> transform(
       Collection<F> fromCollection, Function<? super F, T> function) {
     return new TransformedCollection<>(fromCollection, function);
   }
 
-  static class TransformedCollection<F, T> extends AbstractCollection<T> {
+  static class TransformedCollection<F extends @Nullable Object, T extends @Nullable Object>
+      extends AbstractCollection<T> {
     final Collection<F> fromCollection;
     final Function<? super F, ? extends T> function;
 
@@ -316,7 +327,7 @@ public final class Collections2 {
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return fromCollection.size();
     }
   }
@@ -342,7 +353,7 @@ public final class Collections2 {
   }
 
   /** An implementation of {@link Collection#toString()}. */
-  static String toStringImpl(final Collection<?> collection) {
+  static String toStringImpl(final Collection<? extends @Signed Object> collection) {
     StringBuilder sb = newStringBuilderForCollection(collection.size()).append('[');
     boolean first = true;
     for (Object o : collection) {
@@ -487,7 +498,7 @@ public final class Collections2 {
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return size;
     }
 
@@ -502,7 +513,7 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean contains(@Nullable Object obj) {
+    public boolean contains(@CheckForNull @UnknownSignedness Object obj) {
       if (obj instanceof List) {
         List<?> list = (List<?>) obj;
         return isPermutation(inputList, list);
@@ -517,7 +528,7 @@ public final class Collections2 {
   }
 
   private static final class OrderedPermutationIterator<E> extends AbstractIterator<List<E>> {
-    @Nullable List<E> nextPermutation;
+    @CheckForNull List<E> nextPermutation;
     final Comparator<? super E> comparator;
 
     OrderedPermutationIterator(List<E> list, Comparator<? super E> comparator) {
@@ -526,6 +537,7 @@ public final class Collections2 {
     }
 
     @Override
+    @CheckForNull
     protected List<E> computeNext() {
       if (nextPermutation == null) {
         return endOfData();
@@ -541,6 +553,11 @@ public final class Collections2 {
         nextPermutation = null;
         return;
       }
+      /*
+       * requireNonNull is safe because we don't clear nextPermutation until we're done calling this
+       * method.
+       */
+      requireNonNull(nextPermutation);
 
       int l = findNextL(j);
       Collections.swap(nextPermutation, j, l);
@@ -549,6 +566,11 @@ public final class Collections2 {
     }
 
     int findNextJ() {
+      /*
+       * requireNonNull is safe because we don't clear nextPermutation until we're done calling this
+       * method.
+       */
+      requireNonNull(nextPermutation);
       for (int k = nextPermutation.size() - 2; k >= 0; k--) {
         if (comparator.compare(nextPermutation.get(k), nextPermutation.get(k + 1)) < 0) {
           return k;
@@ -558,6 +580,11 @@ public final class Collections2 {
     }
 
     int findNextL(int j) {
+      /*
+       * requireNonNull is safe because we don't clear nextPermutation until we're done calling this
+       * method.
+       */
+      requireNonNull(nextPermutation);
       E ak = nextPermutation.get(j);
       for (int l = nextPermutation.size() - 1; l > j; l--) {
         if (comparator.compare(ak, nextPermutation.get(l)) < 0) {
@@ -598,7 +625,7 @@ public final class Collections2 {
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return IntMath.factorial(inputList.size());
     }
 
@@ -613,7 +640,7 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean contains(@Nullable Object obj) {
+    public boolean contains(@CheckForNull @UnknownSignedness Object obj) {
       if (obj instanceof List) {
         List<?> list = (List<?>) obj;
         return isPermutation(inputList, list);
@@ -644,6 +671,7 @@ public final class Collections2 {
     }
 
     @Override
+    @CheckForNull
     protected List<E> computeNext() {
       if (j <= 0) {
         return endOfData();

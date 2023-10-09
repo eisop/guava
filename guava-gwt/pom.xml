@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.google.guava</groupId>
     <artifactId>guava-parent</artifactId>
-    <version>30.1.1-jre</version>
+    <version>31.1-jre</version>
   </parent>
   <artifactId>guava-gwt</artifactId>
   <name>Guava GWT compatible libs</name>
@@ -104,7 +104,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.checkerframework</groupId>
+      <groupId>io.github.eisop</groupId>
       <artifactId>checker-qual</artifactId>
     </dependency>
   </dependencies>
@@ -304,6 +304,12 @@
                     <contains text="@GwtCompatible"/>
                   </fileset>
                 </copy>
+                <replace token="@Nullable" value="">
+                  <fileset dir="${project.build.directory}">
+                    <include name="guava-gwt-sources/**/*.java"/>
+                    <include name="guava-test-gwt-sources/**/*.java"/>
+                  </fileset>
+                </replace>
               </target>
             </configuration>
           </execution>

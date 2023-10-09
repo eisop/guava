@@ -32,6 +32,7 @@ import java.nio.charset.Charset;
  */
 @Beta
 @CanIgnoreReturnValue
+@ElementTypesAreNonnullByDefault
 public interface PrimitiveSink {
   /**
    * Puts a byte into this sink.
@@ -47,7 +48,7 @@ public interface PrimitiveSink {
    * @param bytes a byte array
    * @return this instance
    */
-  PrimitiveSink putBytes(byte[] bytes);
+  PrimitiveSink putBytes(byte @MinLen(1)[] bytes);
 
   /**
    * Puts a chunk of an array of bytes into this sink. {@code bytes[off]} is the first byte written,

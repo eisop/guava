@@ -20,7 +20,10 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -32,29 +35,31 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
-final class RegularImmutableSet<E> extends ImmutableSet<E> {
+@ElementTypesAreNonnullByDefault
+final class RegularImmutableSet<E> extends ImmutableSet.CachingAsList<E> {
+  private static final Object[] EMPTY_ARRAY = new Object[0];
   static final RegularImmutableSet<Object> EMPTY =
-      new RegularImmutableSet<>(new Object[0], 0, null, 0);
+      new RegularImmutableSet<>(EMPTY_ARRAY, 0, EMPTY_ARRAY, 0);
 
   private final transient Object[] elements;
-  // the same elements in hashed positions (plus nulls)
-  @VisibleForTesting final transient Object[] table;
+  private final transient int hashCode;
+  // the same values as `elements` in hashed positions (plus nulls)
+  @VisibleForTesting final transient @Nullable Object[] table;
   // 'and' with an int to get a valid table index.
   private final transient int mask;
-  private final transient int hashCode;
 
-  RegularImmutableSet(Object[] elements, int hashCode, Object[] table, int mask) {
+  RegularImmutableSet(Object[] elements, int hashCode, @Nullable Object[] table, int mask) {
     this.elements = elements;
+    this.hashCode = hashCode;
     this.table = table;
     this.mask = mask;
-    this.hashCode = hashCode;
   }
 
   @Pure
   @Override
-  public boolean contains(@Nullable Object target) {
-    Object[] table = this.table;
-    if (target == null || table == null) {
+  public boolean contains(@CheckForNull @UnknownSignedness Object target) {
+    @Nullable Object[] table = this.table;
+    if (target == null || table.length == 0) {
       return false;
     }
     for (int i = Hashing.smearedHash(target); ; i++) {
@@ -69,7 +74,7 @@ final class RegularImmutableSet<E> extends ImmutableSet<E> {
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return elements.length;
   }
 
@@ -99,14 +104,16 @@ final class RegularImmutableSet<E> extends ImmutableSet<E> {
   }
 
   @Override
-  int copyIntoArray(Object[] dst, int offset) {
+  int copyIntoArray(@Nullable Object[] dst, int offset) {
     System.arraycopy(elements, 0, dst, offset, elements.length);
     return offset + elements.length;
   }
 
   @Override
   ImmutableList<E> createAsList() {
-    return (table == null) ? ImmutableList.<E>of() : new RegularImmutableAsList<E>(this, elements);
+    return (table.length == 0)
+        ? ImmutableList.<E>of()
+        : new RegularImmutableAsList<E>(this, elements);
   }
 
   @Override
@@ -116,7 +123,7 @@ final class RegularImmutableSet<E> extends ImmutableSet<E> {
 
   @Pure
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness RegularImmutableSet<E> this) {
     return hashCode;
   }
 

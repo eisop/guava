@@ -23,11 +23,14 @@ import static com.google.common.primitives.UnsignedInts.toLong;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import java.math.BigInteger;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.common.value.qual.IntRange;
 import org.checkerframework.common.value.qual.PolyValue;
+import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
  * A wrapper class for unsigned {@code int} values, supporting arithmetic operations.
@@ -42,7 +45,9 @@ import org.checkerframework.common.value.qual.PolyValue;
  * @author Louis Wasserman
  * @since 11.0
  */
+@AnnotatedFor({"signedness"})
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public final class UnsignedInteger extends Number implements Comparable<UnsignedInteger> {
   public static final UnsignedInteger ZERO = fromIntBits(0);
   public static final UnsignedInteger ONE = fromIntBits(1);
@@ -67,7 +72,8 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
    *
    * @since 14.0
    */
-  public static UnsignedInteger fromIntBits(int bits) {
+  @SuppressWarnings("signedness:argument") // @UnknownSignedness doesn't matter
+  public static UnsignedInteger fromIntBits(@UnknownSignedness int bits) {
     return new UnsignedInteger(bits);
   }
 
@@ -158,6 +164,7 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
    * @throws ArithmeticException if {@code val} is zero
    * @since 14.0
    */
+  @SuppressWarnings("signedness:argument") // 'divide' guarantees result fits in int
   public UnsignedInteger dividedBy(UnsignedInteger val) {
     return fromIntBits(UnsignedInts.divide(value, checkNotNull(val).value));
   }
@@ -168,6 +175,7 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
    * @throws ArithmeticException if {@code val} is zero
    * @since 14.0
    */
+  @SuppressWarnings("signedness:argument") // 'remainder' guarantees result fits in int
   public UnsignedInteger mod(UnsignedInteger val) {
     return fromIntBits(UnsignedInts.remainder(value, checkNotNull(val).value));
   }
@@ -180,14 +188,16 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
    * will be equal to {@code this - 2^32}.
    */
   @Override
+  @SuppressWarnings("value:cast.unsafe") // Unknown int to PolyValue int is ok
   public @PolyValue int intValue(@PolyValue UnsignedInteger this) {
-    return value;
+    return (@PolyValue int) value;
   }
 
   /** Returns the value of this {@code UnsignedInteger} as a {@code long}. */
   @Override
-  public @NonNegative @PolyValue long longValue(@PolyValue UnsignedInteger this) {
-    return toLong(value);
+  @SuppressWarnings("value:cast.unsafe") // Unknown long to PolyValue long is ok
+  public @PolyValue long longValue(@PolyValue UnsignedInteger this) {
+    return (@PolyValue long) toLong(value);
   }
 
   /**
@@ -219,18 +229,19 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
    * other}.
    */
   @Override
+  @SuppressWarnings("signedness:argument") // value(s) are actually unsigned
   public int compareTo(UnsignedInteger other) {
     checkNotNull(other);
     return compare(value, other.value);
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness UnsignedInteger this) {
     return value;
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(@CheckForNull Object obj) {
     if (obj instanceof UnsignedInteger) {
       UnsignedInteger other = (UnsignedInteger) obj;
       return value == other.value;
@@ -249,6 +260,7 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
    * {@code radix < Character.MIN_RADIX} or {@code radix > Character.MAX_RADIX}, the radix {@code
    * 10} is used.
    */
+  @SuppressWarnings("signedness:argument") // value is actually unsigned
   public String toString(@IntRange(from=2, to=36) int radix) {
     return UnsignedInts.toString(value, radix);
   }

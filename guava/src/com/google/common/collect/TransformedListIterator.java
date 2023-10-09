@@ -19,6 +19,8 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Function;
 import java.util.ListIterator;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * An iterator that transforms a backing list iterator; for internal use. This avoids the object
@@ -27,8 +29,9 @@ import java.util.ListIterator;
  * @author Louis Wasserman
  */
 @GwtCompatible
-abstract class TransformedListIterator<F, T> extends TransformedIterator<F, T>
-    implements ListIterator<T> {
+@ElementTypesAreNonnullByDefault
+abstract class TransformedListIterator<F extends @Nullable Object, T extends @Nullable Object>
+    extends TransformedIterator<F, T> implements ListIterator<T> {
   TransformedListIterator(ListIterator<? extends F> backingIterator) {
     super(backingIterator);
   }
@@ -43,27 +46,28 @@ abstract class TransformedListIterator<F, T> extends TransformedIterator<F, T>
   }
 
   @Override
+  @ParametricNullness
   public final T previous() {
     return transform(backingIterator().previous());
   }
 
   @Override
-  public final int nextIndex() {
+  public final @NonNegative int nextIndex() {
     return backingIterator().nextIndex();
   }
 
   @Override
-  public final int previousIndex() {
+  public final @NonNegative int previousIndex() {
     return backingIterator().previousIndex();
   }
 
   @Override
-  public void set(T element) {
+  public void set(@ParametricNullness T element) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void add(T element) {
+  public void add(@ParametricNullness T element) {
     throw new UnsupportedOperationException();
   }
 }

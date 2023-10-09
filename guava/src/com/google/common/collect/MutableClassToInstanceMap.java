@@ -28,16 +28,25 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.framework.qual.AnnotatedFor;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * A mutable class-to-instance map backed by an arbitrary user-provided map. See also {@link
  * ImmutableClassToInstanceMap}.
  *
  * <p>See the Guava User Guide article on <a href=
- * "https://github.com/google/guava/wiki/NewCollectionTypesExplained#classtoinstancemap"> {@code
+ * "https://github.com/google/guava/wiki/NewCollectionTypesExplained#classtoinstancemap">{@code
  * ClassToInstanceMap}</a>.
+ *
+ * <p>This implementation <i>does</i> support null values, despite how it is annotated; see
+ * discussion at {@link ClassToInstanceMap}.
  *
  * @author Kevin Bourrillion
  * @since 2.0
@@ -45,6 +54,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @GwtIncompatible
 @SuppressWarnings("serial") // using writeReplace instead of standard serialization
 @AnnotatedFor({"nullness"})
+@ElementTypesAreNonnullByDefault
 public final class MutableClassToInstanceMap<B> extends ForwardingMap<Class<? extends B>, B>
     implements ClassToInstanceMap<B>, Serializable {
 
@@ -95,7 +105,7 @@ public final class MutableClassToInstanceMap<B> extends ForwardingMap<Class<? ex
   }
 
   @Override
-  public Set<Entry<Class<? extends B>, B>> entrySet() {
+  public Set<Entry<@KeyFor({"this"}) Class<? extends B>, B>> entrySet() {
     return new ForwardingSet<Entry<Class<? extends B>, B>>() {
 
       @Override
@@ -120,13 +130,23 @@ public final class MutableClassToInstanceMap<B> extends ForwardingMap<Class<? ex
         };
       }
 
+      @CFComment("cannot write type qualifiers on receiver that is an anonymous class")
       @Override
-      public Object[] toArray() {
-        return standardToArray();
+      public @PolyNull @PolySigned Object[] toArray() {
+        /*
+         * standardToArray returns `@Nullable Object[]` rather than `Object[]` but only because it
+         * can be used with collections that may contain null. This collection is a collection of
+         * non-null Entry objects (Entry objects that might contain null values but are not
+         * themselves null), so we can treat it as a plain `Object[]`.
+         */
+        @SuppressWarnings("nullness")
+        Object[] result = standardToArray();
+        return result;
       }
 
       @Override
-      public <T> T[] toArray(T[] array) {
+      @SuppressWarnings("nullness") // b/192354773 in our checker affects toArray declarations
+      public <T extends @Nullable @UnknownSignedness Object> T[] toArray(T[] array) {
         return standardToArray(array);
       }
     };
@@ -134,6 +154,7 @@ public final class MutableClassToInstanceMap<B> extends ForwardingMap<Class<? ex
 
   @Override
   @CanIgnoreReturnValue
+  @CheckForNull
   public B put(Class<? extends B> key, B value) {
     return super.put(key, cast(key, value));
   }
@@ -149,17 +170,20 @@ public final class MutableClassToInstanceMap<B> extends ForwardingMap<Class<? ex
 
   @CanIgnoreReturnValue
   @Override
+  @CheckForNull
   public <T extends B> T putInstance(Class<T> type, T value) {
     return cast(type, put(type, value));
   }
 
   @Override
+  @CheckForNull
   public <T extends B> T getInstance(Class<T> type) {
     return cast(type, get(type));
   }
 
   @CanIgnoreReturnValue
-  private static <B, T extends B> T cast(Class<T> type, @Nullable B value) {
+  @CheckForNull
+  private static <B, T extends B> T cast(Class<T> type, @CheckForNull B value) {
     return Primitives.wrap(type).cast(value);
   }
 

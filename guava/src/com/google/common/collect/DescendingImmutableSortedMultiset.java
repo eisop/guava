@@ -15,7 +15,9 @@
 package com.google.common.collect;
 
 import com.google.common.annotations.GwtIncompatible;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * A descending wrapper around an {@code ImmutableSortedMultiset}
@@ -24,6 +26,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @SuppressWarnings("serial") // uses writeReplace, not default serialization
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 final class DescendingImmutableSortedMultiset<E> extends ImmutableSortedMultiset<E> {
   private final transient ImmutableSortedMultiset<E> forward;
 
@@ -32,22 +35,24 @@ final class DescendingImmutableSortedMultiset<E> extends ImmutableSortedMultiset
   }
 
   @Override
-  public int count(@Nullable Object element) {
+  public @NonNegative int count(@CheckForNull @UnknownSignedness Object element) {
     return forward.count(element);
   }
 
   @Override
+  @CheckForNull
   public Entry<E> firstEntry() {
     return forward.lastEntry();
   }
 
   @Override
+  @CheckForNull
   public Entry<E> lastEntry() {
     return forward.firstEntry();
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return forward.size();
   }
 

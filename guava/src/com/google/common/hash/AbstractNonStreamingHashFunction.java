@@ -34,6 +34,7 @@ import org.checkerframework.common.value.qual.MinLen;
  * @author Dimitris Andreou
  */
 @Immutable
+@ElementTypesAreNonnullByDefault
 abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
   @Override
   public Hasher newHasher() {
@@ -46,7 +47,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
     return new BufferingHasher(expectedInputSize);
   }
 
-  @SuppressWarnings("value:argument.type.incompatible")/* Since ByteBuffer is a mutable length data structure, `ByteBuffer.allocate(4)`
+  @SuppressWarnings("value:argument") /* Since ByteBuffer is a mutable length data structure, `ByteBuffer.allocate(4)`
   returns the new byte buffer with 4 as capacity, therefore `ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(input).array()`
   returns an array of length 4 */
   @Override
@@ -54,7 +55,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
     return hashBytes(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(input).array());
   }
 
-  @SuppressWarnings("value:argument.type.incompatible")/* Since ByteBuffer is a mutable length data structure, `ByteBuffer.allocate(8)`
+  @SuppressWarnings("value:argument") /* Since ByteBuffer is a mutable length data structure, `ByteBuffer.allocate(8)`
   returns the new byte buffer with 8 as capacity, therefore `ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(input).array()`
   returns an array of length 8 */
   @Override
@@ -62,7 +63,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
     return hashBytes(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(input).array());
   }
 
-  @SuppressWarnings("value:argument.type.incompatible") /* Since ByteBuffer is a mutable length data structure and input
+  @SuppressWarnings("value:argument") /* Since ByteBuffer is a mutable length data structure and input
   has min length of 1,`ByteBuffer.allocate(len * 2)` returns the new byte buffer with min length of 2 as capacity,
   therefore ByteBuffer.allocate(len * 2).order(ByteOrder.LITTLE_ENDIAN) returns an array of non negative length */
   @Override
@@ -75,7 +76,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
     return hashBytes(buffer.array());
   }
 
-  @SuppressWarnings("value:argument.type.incompatible")//If `input` has min of 1, since `getBytes(charset)`
+  @SuppressWarnings("value:argument") //If `input` has min of 1, since `getBytes(charset)`
   // the resultant byte array, the array returned also has min length of 1
   @Override
   public HashCode hashString(@MinLen(1) CharSequence input, Charset charset) {
@@ -83,11 +84,8 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
   }
 
   @Override
-  public abstract HashCode hashBytes(byte[] input, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int off, @LTLengthOf(value = "#1", offset = "#2 - 1") int len);
+  public abstract HashCode hashBytes(byte[] input, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len);
 
-  @SuppressWarnings("lowerbound:argument.type.incompatible")/* Since invariants: mark <= position <= limit <= capacity,
-  and position is initialized as 0, `input.remaining()` return `limit - position` with lowest possible value as 0.
-  */
   @Override
   public HashCode hashBytes(ByteBuffer input) {
     return newHasher(input.remaining()).putBytes(input).hash();
@@ -108,6 +106,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
     }
 
     @Override
+    @SuppressWarnings("index:argument")
     public Hasher putBytes(byte[] bytes, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
       stream.write(bytes, off, len);
       return this;
@@ -119,10 +118,10 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
       return this;
     }
 
-    @SuppressWarnings(value = {"upperbound:argument.type.incompatible",// `stream.byteArray()` return an array of length 32
+    @SuppressWarnings({
+        "upperbound:argument", // `stream.byteArray()` return an array of length 32
             // Since `stream.length()` return the length of return byte array, 0 + stream.length - 1 is always < stream.length.
-            "lowerbound:argument.type.incompatible"/*`stream.length` returns `count` of the pre-compiled class `ByteArrayOutputStream`.
-            therefore, `count` should be annotated as @NonNegative in `ByteArrayOutputStream` */})
+    })
     @Override
     public HashCode hash() {
       return hashBytes(stream.byteArray(), 0, stream.length());
@@ -135,8 +134,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
       super(expectedInputSize);
     }
 
-    @SuppressWarnings({"lowerbound:argument.type.incompatible", "lowerbound:assignment.type.incompatible"})/* Since invariants: position <= limit <= capacity,
-    and position is initialized as 0, `input.remaining()` return `limit - position` with lowest possible value as 0. */
+    @SuppressWarnings({"index:compound.assignment"})
     void write(ByteBuffer input) {
       @NonNegative int remaining = input.remaining();
       if (count + remaining > buf.length) {
@@ -146,7 +144,7 @@ abstract class AbstractNonStreamingHashFunction extends AbstractHashFunction {
       count += remaining;
     }
 
-    @SuppressWarnings("value:return.type.incompatible")//`buf` array in the pre-compiled class `ByteArrayOutputStream`
+    @SuppressWarnings("value:return") //`buf` array in the pre-compiled class `ByteArrayOutputStream`
       // should be annotated as @MinLen(1)
     byte @MinLen(1)[] byteArray() {
       return buf;

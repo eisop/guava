@@ -19,14 +19,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Collections;
 import java.util.Set;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /** Implementation of an {@link Optional} not containing a reference. */
 @AnnotatedFor({"nullness"})
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 final class Absent<T> extends Optional<T> {
   static final Absent<Object> INSTANCE = new Absent<>();
 
@@ -65,7 +68,8 @@ final class Absent<T> extends Optional<T> {
   }
 
   @Override
-  public @Nullable T orNull() {
+  @CheckForNull
+  public T orNull() {
     return null;
   }
 
@@ -81,12 +85,12 @@ final class Absent<T> extends Optional<T> {
   }
 
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull Object object) {
     return object == this;
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness Absent<T> this) {
     return 0x79a31aac;
   }
 

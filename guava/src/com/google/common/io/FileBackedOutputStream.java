@@ -14,6 +14,7 @@
 
 package com.google.common.io;
 
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
@@ -27,10 +28,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.LTLengthOf;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.PolySigned;
 
 /**
  * An {@link OutputStream} that starts buffering to a byte array, but switches to file buffering
@@ -54,20 +57,23 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @Beta
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 public final class FileBackedOutputStream extends OutputStream {
   private final int fileThreshold;
   private final boolean resetOnFinalize;
   private final ByteSource source;
-  @Nullable private final File parentDirectory;
+  @CheckForNull private final File parentDirectory;
 
   @GuardedBy("this")
   private OutputStream out;
 
   @GuardedBy("this")
+  @CheckForNull
   private MemoryOutput memory;
 
   @GuardedBy("this")
-  private @Nullable File file;
+  @CheckForNull
+  private File file;
 
   /** ByteArrayOutputStream that exposes its internals. */
   private static class MemoryOutput extends ByteArrayOutputStream {
@@ -75,7 +81,6 @@ public final class FileBackedOutputStream extends OutputStream {
       return buf;
     }
 
-    @SuppressWarnings("return.type.incompatible") // this.getBuffer() is the same as this.buf
     @IndexOrHigh("this.getBuffer()") int getCount() {
       return count;
     }
@@ -83,6 +88,7 @@ public final class FileBackedOutputStream extends OutputStream {
 
   /** Returns the file holding the data (possibly null). */
   @VisibleForTesting
+  @CheckForNull
   synchronized File getFile() {
     return file;
   }
@@ -110,7 +116,7 @@ public final class FileBackedOutputStream extends OutputStream {
   }
 
   private FileBackedOutputStream(
-      int fileThreshold, boolean resetOnFinalize, @Nullable File parentDirectory) {
+      int fileThreshold, boolean resetOnFinalize, @CheckForNull File parentDirectory) {
     this.fileThreshold = fileThreshold;
     this.resetOnFinalize = resetOnFinalize;
     this.parentDirectory = parentDirectory;
@@ -158,6 +164,8 @@ public final class FileBackedOutputStream extends OutputStream {
     if (file != null) {
       return new FileInputStream(file);
     } else {
+      // requireNonNull is safe because we always have either `file` or `memory`.
+      requireNonNull(memory);
       return new ByteArrayInputStream(memory.getBuffer(), 0, memory.getCount());
     }
   }
@@ -189,18 +197,18 @@ public final class FileBackedOutputStream extends OutputStream {
   }
 
   @Override
-  public synchronized void write(int b) throws IOException {
+  public synchronized void write(@PolySigned int b) throws IOException {
     update(1);
     out.write(b);
   }
 
   @Override
-  public synchronized void write(byte[] b) throws IOException {
+  public synchronized void write(@PolySigned byte[] b) throws IOException {
     write(b, 0, b.length);
   }
 
   @Override
-  public synchronized void write(byte[] b, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) throws IOException {
+  public synchronized void write(@PolySigned byte[] b, @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) throws IOException {
     update(len);
     out.write(b, off, len);
   }
@@ -221,19 +229,24 @@ public final class FileBackedOutputStream extends OutputStream {
    */
   @GuardedBy("this")
   private void update(int len) throws IOException {
-    if (file == null && (memory.getCount() + len > fileThreshold)) {
+    if (memory != null && (memory.getCount() + len > fileThreshold)) {
       File temp = File.createTempFile("FileBackedOutputStream", null, parentDirectory);
       if (resetOnFinalize) {
         // Finalizers are not guaranteed to be called on system shutdown;
         // this is insurance.
         temp.deleteOnExit();
       }
-      FileOutputStream transfer = new FileOutputStream(temp);
-      transfer.write(memory.getBuffer(), 0, memory.getCount());
-      transfer.flush();
+      try {
+        FileOutputStream transfer = new FileOutputStream(temp);
+        transfer.write(memory.getBuffer(), 0, memory.getCount());
+        transfer.flush();
+        // We've successfully transferred the data; switch to writing to file
+        out = transfer;
+      } catch (IOException e) {
+        temp.delete();
+        throw e;
+      }
 
-      // We've successfully transferred the data; switch to writing to file
-      out = transfer;
       file = temp;
       memory = null;
     }

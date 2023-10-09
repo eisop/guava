@@ -13,8 +13,32 @@ To create file `guava/target/guava-HEAD-jre-SNAPSHOT.jar`:
 (cd guava && mvn -B package -Dmaven.test.skip=true -Danimal.sniffer.skip=true)
 ```
 
-To use a locally-built Checker Framework, add `-P checkerframework-local`,
+To use a locally-built Checker Framework:
+```
+(cd guava && mvn -B package -Dmaven.test.skip=true -Danimal.sniffer.skip=true -P checkerframework-local)
+```
 or change `guava/pom.xml`.
+
+
+To run the Guava test suite
+---------------------------
+
+This not strictly necessary as the CI process will run them. But if you wish to do so,
+it is a two step process. This can take a long time: 20-30 minutes for the compile step
+and 30-35 minutes for the test step.  In order to shorten it a bit, the command lines
+below only run a single format checker.  First, you must run maven with the install
+target to get a copy of all the generated jar files in your local maven repository:
+
+mvn -V -B -U clean install -Dcheckerframework.checkers=org.checkerframework.checker.formatter.FormatterChecker  \
+    -Dcheck.value.phase=skip -Dmaven.test.skip -Dmaven.javadoc.skip
+
+Then you run the test suite:
+
+MAVEN_OPTS=-Xmx6g mvn -V -B -U verify -Dcheckerframework.checkers=org.checkerframework.checker.formatter.FormatterChecker \
+                      -Dcheck.value.phase=skip -Dmaven.javadoc.skip
+
+Running with the single FormatterChecker gets the total time down to about 20-25 minutes,
+almost all testing. (Over 850,000 tests are run.)
 
 
 Typechecking
@@ -68,6 +92,10 @@ Whenever a Checker Framework release is made:
 To update to a newer version of the upstream library
 ----------------------------------------------------
 
+First, update to use the latest Checker Framework by editing file
+`pom.xml` (for `checker-qual`) and `guava/pom.xml` (for `checker`).
+Make a pull request to ensure that type-checking succeeds.
+
 Check for a release at
   https://github.com/google/guava/releases
 .  If there has been one since the last time this repository was pulled,
@@ -80,8 +108,9 @@ git pull https://github.com/google/guava
 ```
 
 and then re-build to ensure that typechecking still works.
-Doing this `git pull` permits incremental resolution of merge conflicts,
-but makes it difficult to re-release a given version of Guava.
+Note: Doing this `git pull` command
+makes it difficult to re-release a given version of Guava,
+compared to pulling in the tag corresponding to a release.
 
 If you wish to see a simplified diff between this fork of Guava and upstream (to make sure that you did not make any mistakes when resolving merge conflicts):
 
@@ -143,7 +172,7 @@ yet written.
 2. Pull in the latest Guava version (https://github.com/google/guava/releases):
 ```
 git fetch --tags https://github.com/google/guava
-git pull https://github.com/google/guava v30.1.1
+git pull https://github.com/google/guava v31.1
 ```
 
 3. Ensure that the project still builds:

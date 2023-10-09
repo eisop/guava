@@ -33,19 +33,24 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.EnsuresLTLengthOf;
 import org.checkerframework.checker.index.qual.EnsuresLTLengthOfIf;
 import org.checkerframework.checker.index.qual.GTENegativeOne;
+import org.checkerframework.checker.index.qual.HasSubsequence;
 import org.checkerframework.checker.index.qual.IndexFor;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.IndexOrLow;
 import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.index.qual.SameLen;
-import org.checkerframework.checker.index.qual.HasSubsequence;
-import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.Signed;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
+import org.checkerframework.framework.qual.AnnotatedFor;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * An immutable array of {@code int} values, with an API resembling {@link List}.
@@ -97,9 +102,11 @@ import org.checkerframework.dataflow.qual.Pure;
  *
  * @since 22.0
  */
+@AnnotatedFor({"signedness"})
 @Beta
 @GwtCompatible
 @Immutable
+@ElementTypesAreNonnullByDefault
 public final class ImmutableIntArray implements Serializable {
   private static final ImmutableIntArray EMPTY = new ImmutableIntArray(new int[0]);
 
@@ -310,7 +317,7 @@ public final class ImmutableIntArray implements Serializable {
          * count is @LTLengthOf(value="array",offset="values.length()-1"), which implies
          * values.length() is @LTLengthOf(value="array",offset="count-1")
          */
-        "upperbound:argument.type.incompatible" // LTLengthOf inversion
+        "upperbound:argument" // LTLengthOf inversion
       )
     public Builder addAll(ImmutableIntArray values) {
       ensureRoomFor(values.length());
@@ -328,8 +335,7 @@ public final class ImmutableIntArray implements Serializable {
      *   https://github.com/kelloggm/checker-framework/issues/158
      */
     @SuppressWarnings({
-      "upperbound:argument.type.incompatible", // https://github.com/kelloggm/checker-framework/issues/158
-      "contracts.postcondition.not.satisfied", // postcondition
+      "index:contracts.postcondition", // postcondition
     })
     @EnsuresLTLengthOf(value = {"count", "#1"}, targetValue = {"array", "array"}, offset = {"#1 - 1","count - 1"})
     private void ensureRoomFor(@NonNegative int numberToAdd) {
@@ -391,7 +397,10 @@ public final class ImmutableIntArray implements Serializable {
   }
 
   @SuppressWarnings(
-          "index") // these three fields need to be initialized in some order, and any ordering leads to the first two issuing errors - since each field is dependent on at least one of the others
+      "index" // these three fields need to be initialized in some order, and any ordering
+  // leads to the first two issuing errors - since each field is dependent on
+  // at least one of the others
+  )
   private ImmutableIntArray(int[] array, @IndexOrHigh("#1") @LessThan("#3 + 1") int start, @IndexOrHigh("#1") int end) {
     this.array = array;
     this.start = start;
@@ -405,7 +414,7 @@ public final class ImmutableIntArray implements Serializable {
   }
 
   /** Returns {@code true} if there are no values in this array ({@link #length} is zero). */
-  @SuppressWarnings("contracts.conditional.postcondition.not.satisfied") // postcondition
+  @SuppressWarnings("index:contracts.conditional.postcondition") // postcondition
   @EnsuresLTLengthOfIf(result = false, expression = "start", targetValue = "array")
   public boolean isEmpty() {
     return end == start;
@@ -432,7 +441,7 @@ public final class ImmutableIntArray implements Serializable {
    * Returns the smallest index for which {@link #get} returns {@code target}, or {@code -1} if no
    * such index exists. Equivalent to {@code asList().indexOf(target)}.
    */
-  @SuppressWarnings("lowerbound:return.type.incompatible") // https://github.com/kelloggm/checker-framework/issues/232
+  @SuppressWarnings("lowerbound:return") // https://github.com/kelloggm/checker-framework/issues/232
   public @IndexOrLow("this") int indexOf(int target) {
     for (int i = start; i < end; i++) {
       if (array[i] == target) {
@@ -516,10 +525,12 @@ public final class ImmutableIntArray implements Serializable {
     return new AsList(this);
   }
 
+  @CFComment({"signedness: A non-generic container class permits only signed values.",
+              "Clients must suppress warnings when storing unsigned values."})
   static class AsList extends AbstractList<Integer> implements RandomAccess, Serializable {
     private final @SameLen("this") ImmutableIntArray parent;
 
-    @SuppressWarnings("samelen:assignment.type.incompatible") // SameLen("this") field
+    @SuppressWarnings("samelen:assignment") // SameLen("this") field
     private AsList(ImmutableIntArray parent) {
       this.parent = parent;
     }
@@ -537,18 +548,20 @@ public final class ImmutableIntArray implements Serializable {
     }
 
     @Override
-    public boolean contains(Object target) {
+    public boolean contains(@CheckForNull @UnknownSignedness Object target) {
       return indexOf(target) >= 0;
     }
 
     @Override
-    public @GTENegativeOne int indexOf(Object target) {
-      return target instanceof Integer ? parent.indexOf((Integer) target) : -1;
+    @SuppressWarnings("signedness:cast.unsafe")
+    public @GTENegativeOne int indexOf(@CheckForNull @UnknownSignedness Object target) {
+      return target instanceof Integer ? parent.indexOf((@Signed Integer) target) : -1;
     }
 
     @Override
-    public @GTENegativeOne int lastIndexOf(Object target) {
-      return target instanceof Integer ? parent.lastIndexOf((Integer) target) : -1;
+    @SuppressWarnings("signedness:cast.unsafe")
+    public @GTENegativeOne int lastIndexOf(@CheckForNull @UnknownSignedness Object target) {
+      return target instanceof Integer ? parent.lastIndexOf((@Signed Integer) target) : -1;
     }
 
     @Override
@@ -569,7 +582,7 @@ public final class ImmutableIntArray implements Serializable {
      * therefore i is an index for parent.array
      */
     @SuppressWarnings("upperbound:array.access.unsafe.high") // index incremented in for-each over list of same length
-    public boolean equals(@Nullable Object object) {
+    public boolean equals(@CheckForNull @UnknownSignedness Object object) {
       if (object instanceof AsList) {
         AsList that = (AsList) object;
         return this.parent.equals(that.parent);
@@ -594,7 +607,7 @@ public final class ImmutableIntArray implements Serializable {
 
     // Because we happen to use the same formula. If that changes, just don't override this.
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness AsList this) {
       return parent.hashCode();
     }
 
@@ -609,7 +622,7 @@ public final class ImmutableIntArray implements Serializable {
    * values as this one, in the same order.
    */
   @Override
-  public boolean equals(@Nullable Object object) {
+  public boolean equals(@CheckForNull Object object) {
     if (object == this) {
       return true;
     }
@@ -630,7 +643,7 @@ public final class ImmutableIntArray implements Serializable {
 
   /** Returns an unspecified hash code for the contents of this immutable array. */
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness ImmutableIntArray this) {
     int hash = 1;
     for (int i = start; i < end; i++) {
       hash *= 31;

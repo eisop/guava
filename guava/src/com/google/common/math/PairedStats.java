@@ -28,7 +28,8 @@ import com.google.common.base.Objects;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * An immutable value object capturing some basic statistics about a collection of paired double
@@ -39,6 +40,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @Beta
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 public final class PairedStats implements Serializable {
 
   private final Stats xStats;
@@ -213,7 +215,7 @@ public final class PairedStats implements Serializable {
    * guarantees {@code strictfp}-like semantics.)
    */
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(@CheckForNull Object obj) {
     if (obj == null) {
       return false;
     }
@@ -233,7 +235,7 @@ public final class PairedStats implements Serializable {
    * including the floating point values. See the note on {@link #equals} for details.
    */
   @Override
-  public int hashCode() {
+  public int hashCode(@UnknownSignedness PairedStats this) {
     return Objects.hashCode(xStats, yStats, sumOfProductsOfDeltas);
   }
 

@@ -33,20 +33,25 @@ import java.util.List;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.HasSubsequence;
 import org.checkerframework.checker.index.qual.IndexFor;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.IndexOrLow;
 import org.checkerframework.checker.index.qual.LTEqLengthOf;
 import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.index.qual.PolyLowerBound;
 import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.index.qual.SubstringIndexFor;
-import org.checkerframework.checker.index.qual.HasSubsequence;
-import org.checkerframework.checker.index.qual.LessThan;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.Signed;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.common.value.qual.IntRange;
 import org.checkerframework.common.value.qual.MinLen;
+import org.checkerframework.framework.qual.AnnotatedFor;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * Static utility methods pertaining to {@code int} primitives, that are not already found in either
@@ -58,7 +63,9 @@ import org.checkerframework.common.value.qual.MinLen;
  * @author Kevin Bourrillion
  * @since 1.0
  */
+@AnnotatedFor({"signedness"})
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public final class Ints extends IntsMethodsForWeb {
   private Ints() {}
 
@@ -111,7 +118,6 @@ public final class Ints extends IntsMethodsForWeb {
    *     {@link Integer#MAX_VALUE} if it is too large, or {@link Integer#MIN_VALUE} if it is too
    *     small
    */
-  @SuppressWarnings("lowerbound:return.type.incompatible") // https://github.com/kelloggm/checker-framework/issues/190
   public static @PolyLowerBound int saturatedCast(@PolyLowerBound long value) {
     if (value > Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
@@ -186,7 +192,6 @@ public final class Ints extends IntsMethodsForWeb {
    * @param array the array to search for the sequence {@code target}
    * @param target the array to search for as a sub-sequence of {@code array}
    */
-  @SuppressWarnings("substringindex:return.type.incompatible") // https://github.com/kelloggm/checker-framework/issues/206 https://github.com/kelloggm/checker-framework/issues/207 https://github.com/kelloggm/checker-framework/issues/208
   public static @LTEqLengthOf("#1") @SubstringIndexFor(value = "#1", offset="#2.length - 1") int indexOf(int[] array, int[] target) {
     checkNotNull(array, "array");
     checkNotNull(target, "target");
@@ -302,7 +307,7 @@ public final class Ints extends IntsMethodsForWeb {
    * pos is increased the same way as length, so pos points to a valid
    * range of length array.length in result.
    */
-  @SuppressWarnings("upperbound:argument.type.incompatible") // sum of lengths
+  @SuppressWarnings("upperbound:argument") // sum of lengths
   public static int[] concat(int[]... arrays) {
     int length = 0;
     for (int[] array : arrays) {
@@ -583,6 +588,8 @@ public final class Ints extends IntsMethodsForWeb {
     return new IntArrayAsList(backingArray);
   }
 
+  @CFComment({"signedness: A non-generic container class permits only signed values.",
+              "Clients must suppress warnings when storing unsigned values."})
   @GwtCompatible
   private static class IntArrayAsList extends AbstractList<Integer>
       implements RandomAccess, Serializable {
@@ -596,7 +603,10 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @SuppressWarnings(
-            "index") // these three fields need to be initialized in some order, and any ordering leads to the first two issuing errors - since each field is dependent on at least one of the others
+        "index" // these three fields need to be initialized in some order, and any ordering
+    // leads to the first two issuing errors - since each field is dependent on
+    // at least one of the others
+    )
     IntArrayAsList(int @MinLen(1)[] array, @IndexFor("#1") @LessThan("#3") int start, @IndexOrHigh("#1") int end) {
       this.array = array;
       this.start = start;
@@ -625,18 +635,18 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    public boolean contains(Object target) {
+    @SuppressWarnings("signedness:cast.unsafe") // non-generic container class
+    public boolean contains(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
-      return (target instanceof Integer) && Ints.indexOf(array, (Integer) target, start, end) != -1;
+      return (target instanceof Integer) && Ints.indexOf(array, (@Signed Integer) target, start, end) != -1;
     }
 
     @Override
-    @SuppressWarnings(
-            "lowerbound:return.type.incompatible") // needs https://github.com/kelloggm/checker-framework/issues/227 on static indexOf method
-    public @IndexOrLow("this") int indexOf(Object target) {
+    @SuppressWarnings("signedness:cast.unsafe") // non-generic container class
+    public @IndexOrLow("this") int indexOf(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Integer) {
-        int i = Ints.indexOf(array, (Integer) target, start, end);
+        int i = Ints.indexOf(array, (@Signed Integer) target, start, end);
         if (i >= 0) {
           return i - start;
         }
@@ -645,12 +655,11 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    @SuppressWarnings(
-            "lowerbound:return.type.incompatible") // needs https://github.com/kelloggm/checker-framework/issues/227 on static indexOf method
-    public @IndexOrLow("this")int lastIndexOf(Object target) {
+    @SuppressWarnings("signedness:cast.unsafe") // non-generic container class
+    public @IndexOrLow("this") int lastIndexOf(@CheckForNull @UnknownSignedness Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Integer) {
-        int i = Ints.lastIndexOf(array, (Integer) target, start, end);
+        int i = Ints.lastIndexOf(array, (@Signed Integer) target, start, end);
         if (i >= 0) {
           return i - start;
         }
@@ -668,7 +677,7 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    @SuppressWarnings("index") // needs https://github.com/kelloggm/checker-framework/issues/229
+    @SuppressWarnings("index:argument") // args to IntArrayAsList
     public List<Integer> subList(@IndexOrHigh("this") int fromIndex, @IndexOrHigh("this") int toIndex) {
       int size = size();
       checkPositionIndexes(fromIndex, toIndex, size);
@@ -679,7 +688,7 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
+    public boolean equals(@CheckForNull @UnknownSignedness Object object) {
       if (object == this) {
         return true;
       }
@@ -700,7 +709,7 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness IntArrayAsList this) {
       int result = 1;
       for (int i = start; i < end; i++) {
         result = 31 * result + Ints.hashCode(array[i]);
@@ -743,7 +752,8 @@ public final class Ints extends IntsMethodsForWeb {
    * @since 11.0
    */
   @Beta
-  public static @Nullable Integer tryParse(String string) {
+  @CheckForNull
+  public static Integer tryParse(String string) {
     return tryParse(string, 10);
   }
 
@@ -768,7 +778,8 @@ public final class Ints extends IntsMethodsForWeb {
    * @since 19.0
    */
   @Beta
-  public static @Nullable Integer tryParse(String string, @IntRange(from=2, to=36) int radix) {
+  @CheckForNull
+  public static Integer tryParse(String string, @IntRange(from=2, to=36) int radix) {
     Long result = Longs.tryParse(string, radix);
     if (result == null || result.longValue() != result.intValue()) {
       return null;

@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.LTLengthOf;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.signedness.qual.PolySigned;
 
 /**
  * An extension of {@code DataOutput} for writing to in-memory byte arrays; its methods offer
@@ -29,6 +30,7 @@ import org.checkerframework.checker.index.qual.NonNegative;
  * @since 1.0
  */
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 public interface ByteArrayDataOutput extends DataOutput {
   @Override
   void write(int b);
@@ -37,7 +39,7 @@ public interface ByteArrayDataOutput extends DataOutput {
   void write(byte b[]);
 
   @Override
-  void write(byte b[], @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len);
+  void write(@PolySigned byte b[], @IndexOrHigh("#1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len);
 
   @Override
   void writeBoolean(boolean v);

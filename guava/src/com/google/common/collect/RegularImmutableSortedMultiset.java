@@ -23,7 +23,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 import java.util.Comparator;
 import java.util.function.ObjIntConsumer;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
  * An immutable sorted multiset with one or more distinct elements.
@@ -32,6 +35,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @SuppressWarnings("serial") // uses writeReplace, not default serialization
 @GwtIncompatible
+@ElementTypesAreNonnullByDefault
 final class RegularImmutableSortedMultiset<E> extends ImmutableSortedMultiset<E> {
   private static final long[] ZERO_CUMULATIVE_COUNTS = {0};
 
@@ -76,23 +80,25 @@ final class RegularImmutableSortedMultiset<E> extends ImmutableSortedMultiset<E>
   }
 
   @Override
+  @CheckForNull
   public Entry<E> firstEntry() {
     return isEmpty() ? null : getEntry(0);
   }
 
   @Override
+  @CheckForNull
   public Entry<E> lastEntry() {
     return isEmpty() ? null : getEntry(length - 1);
   }
 
   @Override
-  public int count(@Nullable Object element) {
+  public @NonNegative int count(@CheckForNull @UnknownSignedness Object element) {
     int index = elementSet.indexOf(element);
     return (index >= 0) ? getCount(index) : 0;
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     long size = cumulativeCounts[offset + length] - cumulativeCounts[offset];
     return Ints.saturatedCast(size);
   }

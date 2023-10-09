@@ -19,9 +19,13 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import javax.annotation.CheckForNull;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Implementation of {@link ImmutableSet} with exactly one element.
@@ -32,38 +36,26 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
+@ElementTypesAreNonnullByDefault
 final class SingletonImmutableSet<E> extends ImmutableSet<E> {
+  // We deliberately avoid caching the asList and hashCode here, to ensure that with
+  // compressed oops, a SingletonImmutableSet packs all the way down to the optimal 16 bytes.
 
   final transient E element;
-  // This is transient because it will be recalculated on the first
-  // call to hashCode().
-  //
-  // A race condition is avoided since threads will either see that the value
-  // is zero and recalculate it themselves, or two threads will see it at
-  // the same time, and both recalculate it.  If the cachedHashCode is 0,
-  // it will always be recalculated, unfortunately.
-  @LazyInit private transient int cachedHashCode;
 
   SingletonImmutableSet(E element) {
     this.element = Preconditions.checkNotNull(element);
   }
 
   @Pure
-  SingletonImmutableSet(E element, int hashCode) {
-    // Guaranteed to be non-null by the presence of the pre-computed hash code.
-    this.element = element;
-    cachedHashCode = hashCode;
-  }
-
-  @Pure
   @Override
-  public int size() {
+  public @NonNegative int size() {
     return 1;
   }
 
   @Pure
   @Override
-  public boolean contains(@Nullable Object target) {
+  public boolean contains(@CheckForNull @UnknownSignedness Object target) {
     return element.equals(target);
   }
 
@@ -73,7 +65,7 @@ final class SingletonImmutableSet<E> extends ImmutableSet<E> {
   }
 
   @Override
-  ImmutableList<E> createAsList() {
+  public ImmutableList<E> asList() {
     return ImmutableList.of(element);
   }
 
@@ -83,26 +75,15 @@ final class SingletonImmutableSet<E> extends ImmutableSet<E> {
   }
 
   @Override
-  int copyIntoArray(Object[] dst, int offset) {
+  int copyIntoArray(@Nullable Object[] dst, int offset) {
     dst[offset] = element;
     return offset + 1;
   }
 
   @Pure
   @Override
-  public final int hashCode() {
-    // Racy single-check.
-    int code = cachedHashCode;
-    if (code == 0) {
-      cachedHashCode = code = element.hashCode();
-    }
-    return code;
-  }
-
-  @Pure
-  @Override
-  boolean isHashCodeFast() {
-    return cachedHashCode != 0;
+  public int hashCode(@UnknownSignedness SingletonImmutableSet<E> this) {
+    return element.hashCode();
   }
 
   @Pure
@@ -112,5 +93,5 @@ final class SingletonImmutableSet<E> extends ImmutableSet<E> {
   }
 
 @Pure
-public boolean equals(@Nullable Object arg0) { return super.equals(arg0); }
+public boolean equals(@Nullable @UnknownSignedness Object arg0) { return super.equals(arg0); }
 }

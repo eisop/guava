@@ -39,6 +39,7 @@ import org.checkerframework.common.value.qual.MinLen;
  * @since 1.8
  * @author Doug Lea
  */
+@ElementTypesAreNonnullByDefault
 final class LongAdder extends Striped64 implements Serializable, LongAddable {
   private static final long serialVersionUID = 7249069246863182397L;
 
@@ -56,7 +57,7 @@ final class LongAdder extends Striped64 implements Serializable, LongAddable {
    *
    * @param x the value to add
    */
-  @SuppressWarnings("value:assignment.type.incompatible")// if `threadHashCode.get()` return an array of min length < 1,
+  @SuppressWarnings("value:assignment") // if `threadHashCode.get()` return an array of min length < 1,
   // other conditions will be computed.
   @Override
   public void add(long x) {
@@ -157,24 +158,28 @@ final class LongAdder extends Striped64 implements Serializable, LongAddable {
    *
    * @return the sum
    */
+  @SuppressWarnings("override.return")  // superclass Number requires @PolyValue, but that is unverifiable and unlikely to be useful to clients
   @Override
   public long longValue() {
     return sum();
   }
 
   /** Returns the {@link #sum} as an {@code int} after a narrowing primitive conversion. */
+  @SuppressWarnings("override.return")  // superclass Number requires @PolyValue, but that is unverifiable and unlikely to be useful to clients
   @Override
   public int intValue() {
     return (int) sum();
   }
 
   /** Returns the {@link #sum} as a {@code float} after a widening primitive conversion. */
+  @SuppressWarnings("override.return")  // superclass Number requires @PolyValue, but that is unverifiable and unlikely to be useful to clients
   @Override
   public float floatValue() {
     return (float) sum();
   }
 
   /** Returns the {@link #sum} as a {@code double} after a widening primitive conversion. */
+  @SuppressWarnings("override.return")  // superclass Number requires @PolyValue, but that is unverifiable and unlikely to be useful to clients
   @Override
   public double doubleValue() {
     return (double) sum();

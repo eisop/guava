@@ -47,7 +47,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantLock;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.signedness.qual.PolySigned;
+import org.checkerframework.checker.signedness.qual.UnknownSignedness;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * The concurrent hash map implementation built by {@link MapMaker}.
@@ -65,7 +71,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 // TODO(kak): Consider removing @CanIgnoreReturnValue from this class.
 @GwtIncompatible
-@SuppressWarnings("GuardedBy") // TODO(b/35466881): Fix or suppress.
+@SuppressWarnings({
+  "GuardedBy", // TODO(b/35466881): Fix or suppress.
+  "nullness", // too much trouble for the payoff
+})
+// TODO(cpovirk): Annotate for nullness.
 class MapMakerInternalMap<
         K,
         V,
@@ -1426,7 +1436,7 @@ class MapMakerInternalMap<
       }
     }
 
-    boolean containsKey(Object key, int hash) {
+    boolean containsKey(@UnknownSignedness Object key, int hash) {
       try {
         if (count != 0) { // read-volatile
           E e = getLiveEntry(key, hash);
@@ -1444,7 +1454,7 @@ class MapMakerInternalMap<
      * MapMakerInternalMap#containsValue} directly.
      */
     @VisibleForTesting
-    boolean containsValue(Object value) {
+    boolean containsValue(@UnknownSignedness Object value) {
       try {
         if (count != 0) { // read-volatile
           AtomicReferenceArray<E> table = this.table;
@@ -2320,7 +2330,7 @@ class MapMakerInternalMap<
   }
 
   @Override
-  public int size() {
+  public @NonNegative int size() {
     Segment<K, V, E, S>[] segments = this.segments;
     long sum = 0;
     for (int i = 0; i < segments.length; ++i) {
@@ -2330,7 +2340,7 @@ class MapMakerInternalMap<
   }
 
   @Override
-  public V get(@Nullable Object key) {
+  public V get(@Nullable @UnknownSignedness Object key) {
     if (key == null) {
       return null;
     }
@@ -2351,7 +2361,7 @@ class MapMakerInternalMap<
   }
 
   @Override
-  public boolean containsKey(@Nullable Object key) {
+  public boolean containsKey(@Nullable @UnknownSignedness Object key) {
     if (key == null) {
       return false;
     }
@@ -2360,7 +2370,7 @@ class MapMakerInternalMap<
   }
 
   @Override
-  public boolean containsValue(@Nullable Object value) {
+  public boolean containsValue(@Nullable @UnknownSignedness Object value) {
     if (value == null) {
       return false;
     }
@@ -2424,7 +2434,7 @@ class MapMakerInternalMap<
 
   @CanIgnoreReturnValue
   @Override
-  public V remove(@Nullable Object key) {
+  public V remove(@Nullable @UnknownSignedness Object key) {
     if (key == null) {
       return null;
     }
@@ -2434,7 +2444,7 @@ class MapMakerInternalMap<
 
   @CanIgnoreReturnValue
   @Override
-  public boolean remove(@Nullable Object key, @Nullable Object value) {
+  public boolean remove(@Nullable @UnknownSignedness Object key, @Nullable @UnknownSignedness Object value) {
     if (key == null || value == null) {
       return false;
     }
@@ -2473,7 +2483,7 @@ class MapMakerInternalMap<
   transient @Nullable Set<K> keySet;
 
   @Override
-  public Set<K> keySet() {
+  public Set<@KeyFor({"this"}) K> keySet() {
     Set<K> ks = keySet;
     return (ks != null) ? ks : (keySet = new KeySet());
   }
@@ -2489,7 +2499,7 @@ class MapMakerInternalMap<
   transient @Nullable Set<Entry<K, V>> entrySet;
 
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public Set<Entry<@KeyFor({"this"}) K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
     return (es != null) ? es : (entrySet = new EntrySet());
   }
@@ -2654,7 +2664,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(@UnknownSignedness WriteThroughEntry this) {
       // Cannot use key and value equivalence
       return key.hashCode() ^ value.hashCode();
     }
@@ -2684,7 +2694,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return MapMakerInternalMap.this.size();
     }
 
@@ -2694,12 +2704,12 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       return MapMakerInternalMap.this.containsKey(o);
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@UnknownSignedness Object o) {
       return MapMakerInternalMap.this.remove(o) != null;
     }
 
@@ -2718,7 +2728,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return MapMakerInternalMap.this.size();
     }
 
@@ -2728,7 +2738,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       return MapMakerInternalMap.this.containsValue(o);
     }
 
@@ -2740,8 +2750,9 @@ class MapMakerInternalMap<
     // super.toArray() may misbehave if size() is inaccurate, at least on old versions of Android.
     // https://code.google.com/p/android/issues/detail?id=36519 / http://r.android.com/47508
 
+    @CFComment("qualifers depend on V, which this method doesn't know")
     @Override
-    public Object[] toArray() {
+    public @PolyNull @PolySigned Object[] toArray() {
       return toArrayList(this).toArray();
     }
 
@@ -2760,7 +2771,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@UnknownSignedness Object o) {
       if (!(o instanceof Entry)) {
         return false;
       }
@@ -2775,7 +2786,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@UnknownSignedness Object o) {
       if (!(o instanceof Entry)) {
         return false;
       }
@@ -2785,7 +2796,7 @@ class MapMakerInternalMap<
     }
 
     @Override
-    public int size() {
+    public @NonNegative int size() {
       return MapMakerInternalMap.this.size();
     }
 
@@ -2805,7 +2816,7 @@ class MapMakerInternalMap<
     // https://code.google.com/p/android/issues/detail?id=36519 / http://r.android.com/47508
 
     @Override
-    public Object[] toArray() {
+    public @PolyNull @PolySigned Object[] toArray(SafeToArraySet<@PolyNull @PolySigned E> this) {
       return toArrayList(this).toArray();
     }
 

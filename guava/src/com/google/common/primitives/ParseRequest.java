@@ -16,9 +16,12 @@ package com.google.common.primitives;
 
 import com.google.common.annotations.GwtCompatible;
 import org.checkerframework.common.value.qual.IntRange;
+import org.checkerframework.framework.qual.AnnotatedFor;
 
 /** A string to be parsed as a number and the radix to interpret it in. */
+@AnnotatedFor({"signedness"})
 @GwtCompatible
+@ElementTypesAreNonnullByDefault
 final class ParseRequest {
   final String rawValue;
   final @IntRange(from = Character.MIN_RADIX, to = Character.MAX_RADIX) int radix;
