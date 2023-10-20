@@ -11,7 +11,7 @@ set -e
 
 ## Build Checker Framework
 if [ -z "${CHECKERFRAMEWORK}" ] && [ ! -d "../checker-framework/" ] ; then
-  (cd .. && git clone --depth 1 https://github.com/typetools/checker-framework.git)
+  (cd .. && git clone --depth 1 https://github.com/eisop/checker-framework.git)
   CHECKERFRAMEWORK=$(cd ../checker-framework/ >/dev/null 2>&1 && pwd -P)
   export CHECKERFRAMEWORK
 fi

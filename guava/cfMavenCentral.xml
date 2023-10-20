@@ -5,7 +5,7 @@
     <packaging>jar</packaging>
 
     <name>Guava</name>
-    <url>https://github.com/typetools/guava</url>
+    <url>https://github.com/eisop/guava</url>
     <description>Guava library, with additional type annotations</description>
 
     <groupId>org.checkerframework.annotatedlib</groupId>
@@ -22,8 +22,8 @@
     <version>30.1.1-jre</version>
 
     <scm>
-        <url>https://github.com/typetools/guava.git</url>
-        <connection>https://github.com/typetools/guava.git</connection>
+        <url>https://github.com/eisop/guava.git</url>
+        <connection>https://github.com/eisop/guava.git</connection>
     </scm>
 
     <developers>
