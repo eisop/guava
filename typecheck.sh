@@ -18,7 +18,7 @@ fi
 
 # This also builds annotation-tools.
 # Run assembleForJavac because it does not build the javadoc, so it is faster than assemble.
-(cd "${CHECKERFRAMEWORK}" && ./gradlew assembleForJavac --console=plain -Dorg.gradle.internal.http.socketTimeout=60000 -Dorg.gradle.internal.http.connectionTimeout=60000 )
+#(cd "${CHECKERFRAMEWORK}" && ./gradlew assembleForJavac --console=plain -Dorg.gradle.internal.http.socketTimeout=60000 -Dorg.gradle.internal.http.connectionTimeout=60000 )
 
 # As of 7/27/2019, there are only annotations for:
 #  * index
@@ -42,6 +42,8 @@ elif [[ "$1" == "signature" ]]; then
   (cd guava && mvn -B compile -P checkerframework-local -Dcheckerframework.checkers=org.checkerframework.checker.signature.SignatureChecker)
 elif [[ "$1" == "signedness" ]]; then
   (cd guava && mvn -B compile -P checkerframework-local -Dcheckerframework.checkers=org.checkerframework.checker.signedness.SignednessChecker)
+elif [[ "$1" == "pico" ]]; then
+  (cd guava && mvn -B compile -P checkerframework-local -Dcheckerframework.checkers=org.checkerframework.checker.pico.PICOChecker -Dcheckerframework.extraargs="-AonlyDefs=^com\.google\.common\.collect")
 elif [[ "$1" == "nothing" ]]; then
   true
 else

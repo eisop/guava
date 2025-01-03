@@ -385,14 +385,14 @@
           <artifactId>checker-qual</artifactId>
           <version>0.0.0</version>
           <scope>system</scope>
-          <systemPath>${CHECKERFRAMEWORK}/checker/dist/checker-qual.jar</systemPath>
+          <systemPath>/Volumes/workspace/eisop-cf/checker-framework/checker/dist/checker-qual.jar</systemPath>
         </dependency>
         <dependency>
           <groupId>io.github.eisop</groupId>
           <artifactId>checker</artifactId>
           <version>0.0.0</version>
           <scope>system</scope>
-          <systemPath>${CHECKERFRAMEWORK}/checker/dist/checker.jar</systemPath>
+          <systemPath>/Volumes/workspace/eisop-cf/checker-framework/checker/dist/checker.jar</systemPath>
         </dependency>
       </dependencies>
     </profile>

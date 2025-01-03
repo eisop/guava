@@ -37,6 +37,7 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -52,7 +53,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @ElementTypesAreNonnullByDefault
-public class ImmutableListMultimap<K, V> extends ImmutableMultimap<K, V>
+public class ImmutableListMultimap<K extends @Immutable Object, V> extends ImmutableMultimap<K, V>
     implements ListMultimap<K, V> {
   /**
    * Returns a {@link Collector} that accumulates elements into an {@code ImmutableListMultimap}

@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -166,7 +167,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @GwtCompatible
 @AnnotatedFor({"nullness"})
 @ElementTypesAreNonnullByDefault
-public interface Multimap<K extends @Nullable Object, V extends @Nullable Object> {
+public @ReceiverDependentMutable interface Multimap<K extends @Nullable Object, V extends @Nullable Object> {
   // Query Operations
 
   /**
