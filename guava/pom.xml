@@ -91,7 +91,7 @@
     <dependency>
       <groupId>io.github.eisop</groupId>
       <artifactId>checker</artifactId>
-      <version>3.34.0-eisop1</version>
+      <version>3.42.0-eisop5</version>
     </dependency>
   </dependencies>
   <build>
