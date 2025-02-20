@@ -26,6 +26,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -36,7 +37,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-final class ImmutableMapValues<K, V> extends ImmutableCollection<V> {
+final class ImmutableMapValues<K extends @Immutable Object, V> extends ImmutableCollection<V> {
   private final ImmutableMap<K, V> map;
 
   ImmutableMapValues(ImmutableMap<K, V> map) {

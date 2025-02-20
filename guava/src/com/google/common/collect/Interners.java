@@ -23,6 +23,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.MapMaker.Dummy;
 import com.google.common.collect.MapMakerInternalMap.InternalEntry;
 import javax.annotation.CheckForNull;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -112,7 +113,7 @@ public final class Interners {
   }
 
   @VisibleForTesting
-  static final class InternerImpl<E> implements Interner<E> {
+  static final class InternerImpl<E extends @Immutable Object> implements Interner<E> {
     // MapMaker is our friend, we know about this type
     @VisibleForTesting final MapMakerInternalMap<E, Dummy, ?, ?> map;
 

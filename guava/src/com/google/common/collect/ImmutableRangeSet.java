@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -731,7 +732,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
    *
    * @since 14.0
    */
-  public static class Builder<C extends Comparable<?>> {
+  public static @Mutable class Builder<C extends Comparable<?>> {
     private final List<Range<C>> ranges;
 
     public Builder() {

@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -38,7 +40,7 @@ final class Platform {
       java.util.logging.Logger.getLogger(Platform.class.getName());
 
   /** Returns the platform preferred implementation of a map based on a hash table. */
-  static <K extends @Nullable Object, V extends @Nullable Object>
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       Map<K, V> newHashMapWithExpectedSize(int expectedSize) {
     return Maps.newHashMapWithExpectedSize(expectedSize);
   }
@@ -47,13 +49,13 @@ final class Platform {
    * Returns the platform preferred implementation of an insertion ordered map based on a hash
    * table.
    */
-  static <K extends @Nullable Object, V extends @Nullable Object>
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       Map<K, V> newLinkedHashMapWithExpectedSize(int expectedSize) {
     return Maps.newLinkedHashMapWithExpectedSize(expectedSize);
   }
 
   /** Returns the platform preferred implementation of a set based on a hash table. */
-  static <E extends @Nullable Object> Set<E> newHashSetWithExpectedSize(int expectedSize) {
+  static <E extends @Nullable @Readonly Object> Set<E> newHashSetWithExpectedSize(int expectedSize) {
     return Sets.newHashSetWithExpectedSize(expectedSize);
   }
 
@@ -66,7 +68,7 @@ final class Platform {
    * Returns the platform preferred implementation of an insertion ordered set based on a hash
    * table.
    */
-  static <E extends @Nullable Object> Set<E> newLinkedHashSetWithExpectedSize(int expectedSize) {
+  static <E extends @Nullable @Readonly Object> Set<E> newLinkedHashSetWithExpectedSize(int expectedSize) {
     return Sets.newLinkedHashSetWithExpectedSize(expectedSize);
   }
 
@@ -74,7 +76,7 @@ final class Platform {
    * Returns the platform preferred map implementation that preserves insertion order when used only
    * for insertions.
    */
-  static <K extends @Nullable Object, V extends @Nullable Object>
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       Map<K, V> preservesInsertionOrderOnPutsMap() {
     return Maps.newLinkedHashMap();
   }
@@ -83,7 +85,7 @@ final class Platform {
    * Returns the platform preferred set implementation that preserves insertion order when used only
    * for insertions.
    */
-  static <E extends @Nullable Object> Set<E> preservesInsertionOrderOnAddsSet() {
+  static <E extends @Nullable @Readonly Object> Set<E> preservesInsertionOrderOnAddsSet() {
     return Sets.newLinkedHashSet();
   }
 
@@ -99,7 +101,7 @@ final class Platform {
    * about arrays for now, as they're a mess. (We previously discussed this in the review of
    * ObjectArrays, which is the main caller of this method.)
    */
-  static <T extends @Nullable Object> T[] newArray(T[] reference, int length) {
+  static <T extends @Nullable @Readonly Object> T[] newArray(T[] reference, int length) {
     Class<?> type = reference.getClass().getComponentType();
 
     // the cast is safe because
@@ -119,7 +121,7 @@ final class Platform {
    * - https://github.com/jspecify/jdk/commit/71d826792b8c7ef95d492c50a274deab938f2552
    */
   @SuppressWarnings("nullness")
-  static <T extends @Nullable Object> T[] copy(Object[] source, int from, int to, T[] arrayOfType) {
+  static <T extends @Nullable @Readonly Object> T @Mutable [] copy(Object @Readonly [] source, int from, int to, T @Readonly [] arrayOfType) {
     return Arrays.copyOfRange(source, from, to, (Class<? extends T[]>) arrayOfType.getClass());
   }
 

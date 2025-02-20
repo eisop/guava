@@ -43,6 +43,7 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -59,7 +60,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @ElementTypesAreNonnullByDefault
 public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, V> {
 
-  private final NavigableMap<Cut<K>, RangeMapEntry<K, V>> entriesByLowerBound;
+  private final @Mutable NavigableMap<Cut<K>, RangeMapEntry<K, V>> entriesByLowerBound;
 
   public static <K extends Comparable, V> TreeRangeMap<K, V> create() {
     return new TreeRangeMap<>();

@@ -18,6 +18,7 @@ import com.google.common.annotations.GwtCompatible;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -30,10 +31,10 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @GwtCompatible(serializable = true)
 @ElementTypesAreNonnullByDefault
 final class JdkBackedImmutableSet<E> extends IndexedImmutableSet<E> {
-  private final Set<?> delegate;
+  private final @Readonly Set<?> delegate;
   private final ImmutableList<E> delegateList;
 
-  JdkBackedImmutableSet(Set<?> delegate, ImmutableList<E> delegateList) {
+  JdkBackedImmutableSet(@Readonly Set<?> delegate, ImmutableList<E> delegateList) {
     this.delegate = delegate;
     this.delegateList = delegateList;
   }

@@ -28,6 +28,10 @@ import java.util.Spliterator;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Assignable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -37,8 +41,8 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractTable<
-        R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable abstract class AbstractTable<
+        R extends @Nullable Object, C extends @Nullable Object, V extends @Readonly @Nullable Object>
     implements Table<R, C, V> {
 
   @Override
@@ -97,7 +101,7 @@ abstract class AbstractTable<
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V remove(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+  public V remove(@Mutable AbstractTable<R, C, V> this, @CheckForNull Object rowKey, @CheckForNull Object columnKey) {
     Map<C, V> row = Maps.safeGet(rowMap(), rowKey);
     return (row == null) ? null : Maps.safeRemove(row, columnKey);
   }
@@ -105,19 +109,19 @@ abstract class AbstractTable<
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V put(
+  public V put(@Mutable AbstractTable<R, C, V> this,
       @ParametricNullness R rowKey, @ParametricNullness C columnKey, @ParametricNullness V value) {
     return row(rowKey).put(columnKey, value);
   }
 
   @Override
-  public void putAll(Table<? extends R, ? extends C, ? extends V> table) {
+  public void putAll(@Mutable AbstractTable<R, C, V> this, Table<? extends R, ? extends C, ? extends V> table) {
     for (Table.Cell<? extends R, ? extends C, ? extends V> cell : table.cellSet()) {
       put(cell.getRowKey(), cell.getColumnKey(), cell.getValue());
     }
   }
 
-  @LazyInit @CheckForNull private transient Set<Cell<R, C, V>> cellSet;
+  @LazyInit @CheckForNull private transient @Assignable Set<Cell<R, C, V>> cellSet;
 
   @Override
   public Set<Cell<R, C, V>> cellSet() {
@@ -129,12 +133,12 @@ abstract class AbstractTable<
     return new CellSet();
   }
 
-  abstract Iterator<Table.Cell<R, C, V>> cellIterator();
+  abstract @ReceiverDependentMutable Iterator<Table.Cell<R, C, V>> cellIterator();
 
-  abstract Spliterator<Table.Cell<R, C, V>> cellSpliterator();
+  abstract @ReceiverDependentMutable Spliterator<Table.Cell<R, C, V>> cellSpliterator();
 
   @WeakOuter
-  class CellSet extends AbstractSet<Cell<R, C, V>> {
+  @ReceiverDependentMutable class CellSet extends AbstractSet<Cell<R, C, V>> {
     @Override
     public boolean contains(@CheckForNull @UnknownSignedness Object o) {
       if (o instanceof Cell) {
@@ -160,17 +164,17 @@ abstract class AbstractTable<
     }
 
     @Override
-    public void clear() {
+    public void clear(@Mutable CellSet this) {
       AbstractTable.this.clear();
     }
 
     @Override
-    public Iterator<Table.Cell<R, C, V>> iterator() {
+    public @ReceiverDependentMutable Iterator<Table.Cell<R, C, V>> iterator() {
       return cellIterator();
     }
 
     @Override
-    public Spliterator<Cell<R, C, V>> spliterator() {
+    public @ReceiverDependentMutable Spliterator<Cell<R, C, V>> spliterator() {
       return cellSpliterator();
     }
 
@@ -180,19 +184,19 @@ abstract class AbstractTable<
     }
   }
 
-  @LazyInit @CheckForNull private transient Collection<V> values;
+  @LazyInit @CheckForNull private transient @Assignable Collection<V> values;
 
   @Override
-  public Collection<V> values() {
+  public @ReceiverDependentMutable Collection<V> values() {
     Collection<V> result = values;
     return (result == null) ? values = createValues() : result;
   }
 
-  Collection<V> createValues() {
+  @ReceiverDependentMutable Collection<V> createValues() {
     return new Values();
   }
 
-  Iterator<V> valuesIterator() {
+  @ReceiverDependentMutable Iterator<V> valuesIterator() {
     return new TransformedIterator<Cell<R, C, V>, V>(cellSet().iterator()) {
       @Override
       @ParametricNullness
@@ -207,24 +211,24 @@ abstract class AbstractTable<
   }
 
   @WeakOuter
-  class Values extends AbstractCollection<V> {
+  @ReceiverDependentMutable class Values extends AbstractCollection<V> {
     @Override
-    public Iterator<V> iterator() {
+    public @ReceiverDependentMutable Iterator<V> iterator() {
       return valuesIterator();
     }
 
     @Override
-    public Spliterator<V> spliterator() {
+    public @ReceiverDependentMutable Spliterator<V> spliterator() {
       return valuesSpliterator();
     }
 
     @Override
-    public boolean contains(@CheckForNull @UnknownSignedness Object o) {
+    public boolean contains(@CheckForNull @UnknownSignedness @Readonly Object o) {
       return containsValue(o);
     }
 
     @Override
-    public void clear() {
+    public void clear(@Mutable Values this) {
       AbstractTable.this.clear();
     }
 

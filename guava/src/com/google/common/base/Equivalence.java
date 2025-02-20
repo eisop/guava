@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.function.BiPredicate;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -363,7 +364,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    * @since 8.0 (in Equivalences with null-friendly behavior)
    * @since 4.0 (in Equivalences)
    */
-  public static Equivalence<Object> equals() {
+  public static Equivalence<@Readonly Object> equals() {
     return Equals.INSTANCE;
   }
 

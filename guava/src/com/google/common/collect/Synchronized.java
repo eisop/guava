@@ -52,6 +52,8 @@ import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
@@ -85,7 +87,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 final class Synchronized {
   private Synchronized() {}
 
-  static class SynchronizedObject implements Serializable {
+  @ReceiverDependentMutable static class SynchronizedObject implements Serializable {
     final Object delegate;
     final Object mutex;
 
@@ -94,7 +96,7 @@ final class Synchronized {
       this.mutex = (mutex == null) ? this : mutex;
     }
 
-    Object delegate() {
+    @ReceiverDependentMutable Object delegate() {
       return delegate;
     }
 
@@ -124,13 +126,13 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static <E extends @Nullable Object> Collection<E> collection(
+  private static <E extends @Nullable @Readonly Object> Collection<E> collection(
       Collection<E> collection, @CheckForNull Object mutex) {
     return new SynchronizedCollection<E>(collection, mutex);
   }
 
   @VisibleForTesting
-  static class SynchronizedCollection<E extends @Nullable Object> extends SynchronizedObject
+  static class SynchronizedCollection<E extends @Nullable @Readonly Object> extends SynchronizedObject
       implements Collection<E> {
     private SynchronizedCollection(Collection<E> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -266,7 +268,7 @@ final class Synchronized {
 
     @Override
     @SuppressWarnings("nullness:return")
-    public <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] a) {
+    public <T extends @Nullable @UnknownSignedness @Readonly Object> T[] toArray(@PolyNull T[] a) {
       synchronized (mutex) {
         return delegate().toArray(a);
       }
@@ -276,11 +278,11 @@ final class Synchronized {
   }
 
   @VisibleForTesting
-  static <E extends @Nullable Object> Set<E> set(Set<E> set, @CheckForNull Object mutex) {
+  static <E extends @Nullable @Readonly Object> Set<E> set(Set<E> set, @CheckForNull Object mutex) {
     return new SynchronizedSet<E>(set, mutex);
   }
 
-  static class SynchronizedSet<E extends @Nullable Object> extends SynchronizedCollection<E>
+  static class SynchronizedSet<E extends @Nullable @Readonly Object> extends SynchronizedCollection<E>
       implements Set<E> {
 
     SynchronizedSet(Set<E> delegate, @CheckForNull Object mutex) {
@@ -314,12 +316,12 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static <E extends @Nullable Object> SortedSet<E> sortedSet(
+  private static <E extends @Nullable @Readonly Object> SortedSet<E> sortedSet(
       SortedSet<E> set, @CheckForNull Object mutex) {
     return new SynchronizedSortedSet<E>(set, mutex);
   }
 
-  static class SynchronizedSortedSet<E extends @Nullable Object> extends SynchronizedSet<E>
+  static class SynchronizedSortedSet<E extends @Nullable @Readonly Object> extends SynchronizedSet<E>
       implements SortedSet<E> {
     SynchronizedSortedSet(SortedSet<E> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -382,14 +384,14 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static <E extends @Nullable Object> List<E> list(
+  private static <E extends @Nullable @Readonly Object> List<E> list(
       List<E> list, @CheckForNull Object mutex) {
     return (list instanceof RandomAccess)
         ? new SynchronizedRandomAccessList<E>(list, mutex)
         : new SynchronizedList<E>(list, mutex);
   }
 
-  private static class SynchronizedList<E extends @Nullable Object>
+  private static class SynchronizedList<E extends @Nullable @Readonly Object>
       extends SynchronizedCollection<E> implements List<E> {
     SynchronizedList(List<E> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -505,7 +507,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static class SynchronizedRandomAccessList<E extends @Nullable Object>
+  private static class SynchronizedRandomAccessList<E extends @Nullable @Readonly Object>
       extends SynchronizedList<E> implements RandomAccess {
     SynchronizedRandomAccessList(List<E> list, @CheckForNull Object mutex) {
       super(list, mutex);
@@ -514,7 +516,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <E extends @Nullable Object> Multiset<E> multiset(
+  static <E extends @Nullable @Readonly Object> Multiset<E> multiset(
       Multiset<E> multiset, @CheckForNull Object mutex) {
     if (multiset instanceof SynchronizedMultiset || multiset instanceof ImmutableMultiset) {
       return multiset;
@@ -522,7 +524,7 @@ final class Synchronized {
     return new SynchronizedMultiset<E>(multiset, mutex);
   }
 
-  private static class SynchronizedMultiset<E extends @Nullable Object>
+  private static class SynchronizedMultiset<E extends @Nullable @Readonly Object>
       extends SynchronizedCollection<E> implements Multiset<E> {
     @CheckForNull transient Set<E> elementSet;
     @CheckForNull transient Set<Multiset.Entry<E>> entrySet;
@@ -615,7 +617,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <K extends @Nullable Object, V extends @Nullable Object> Multimap<K, V> multimap(
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object> Multimap<K, V> multimap(
       Multimap<K, V> multimap, @CheckForNull Object mutex) {
     if (multimap instanceof SynchronizedMultimap || multimap instanceof BaseImmutableMultimap) {
       return multimap;
@@ -623,7 +625,7 @@ final class Synchronized {
     return new SynchronizedMultimap<>(multimap, mutex);
   }
 
-  private static class SynchronizedMultimap<K extends @Nullable Object, V extends @Nullable Object>
+  private static class SynchronizedMultimap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedObject implements Multimap<K, V> {
     @CheckForNull transient Set<K> keySet;
     @CheckForNull transient Collection<V> valuesCollection;
@@ -819,7 +821,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <K extends @Nullable Object, V extends @Nullable Object> ListMultimap<K, V> listMultimap(
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object> ListMultimap<K, V> listMultimap(
       ListMultimap<K, V> multimap, @CheckForNull Object mutex) {
     if (multimap instanceof SynchronizedListMultimap || multimap instanceof BaseImmutableMultimap) {
       return multimap;
@@ -828,7 +830,7 @@ final class Synchronized {
   }
 
   private static class SynchronizedListMultimap<
-          K extends @Nullable Object, V extends @Nullable Object>
+          K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedMultimap<K, V> implements ListMultimap<K, V> {
     SynchronizedListMultimap(ListMultimap<K, V> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -863,7 +865,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <K extends @Nullable Object, V extends @Nullable Object> SetMultimap<K, V> setMultimap(
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object> SetMultimap<K, V> setMultimap(
       SetMultimap<K, V> multimap, @CheckForNull Object mutex) {
     if (multimap instanceof SynchronizedSetMultimap || multimap instanceof BaseImmutableMultimap) {
       return multimap;
@@ -872,7 +874,7 @@ final class Synchronized {
   }
 
   private static class SynchronizedSetMultimap<
-          K extends @Nullable Object, V extends @Nullable Object>
+          K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedMultimap<K, V> implements SetMultimap<K, V> {
     @CheckForNull transient Set<Map.Entry<K, V>> entrySet;
 
@@ -920,7 +922,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <K extends @Nullable Object, V extends @Nullable Object>
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       SortedSetMultimap<K, V> sortedSetMultimap(
           SortedSetMultimap<K, V> multimap, @CheckForNull Object mutex) {
     if (multimap instanceof SynchronizedSortedSetMultimap) {
@@ -930,7 +932,7 @@ final class Synchronized {
   }
 
   private static class SynchronizedSortedSetMultimap<
-          K extends @Nullable Object, V extends @Nullable Object>
+          K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedSetMultimap<K, V> implements SortedSetMultimap<K, V> {
     SynchronizedSortedSetMultimap(SortedSetMultimap<K, V> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -973,7 +975,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static <E extends @Nullable Object> Collection<E> typePreservingCollection(
+  private static <E extends @Nullable @Readonly Object> Collection<E> typePreservingCollection(
       Collection<E> collection, @CheckForNull Object mutex) {
     if (collection instanceof SortedSet) {
       return sortedSet((SortedSet<E>) collection, mutex);
@@ -987,7 +989,7 @@ final class Synchronized {
     return collection(collection, mutex);
   }
 
-  private static <E extends @Nullable Object> Set<E> typePreservingSet(
+  private static <E extends @Nullable @Readonly Object> Set<E> typePreservingSet(
       Set<E> set, @CheckForNull Object mutex) {
     if (set instanceof SortedSet) {
       return sortedSet((SortedSet<E>) set, mutex);
@@ -997,7 +999,7 @@ final class Synchronized {
   }
 
   private static class SynchronizedAsMapEntries<
-          K extends @Nullable Object, V extends @Nullable Object>
+          K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedSet<Map.Entry<K, Collection<V>>> {
     SynchronizedAsMapEntries(
         Set<Map.Entry<K, Collection<V>>> delegate, @CheckForNull Object mutex) {
@@ -1044,7 +1046,7 @@ final class Synchronized {
 
     @Override
     //@SuppressWarnings("nullness") // b/192354773 in our checker affects toArray declarations
-    public <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] array) {
+    public <T extends @Nullable @UnknownSignedness @Readonly Object> T[] toArray(@PolyNull T[] array) {
       synchronized (mutex) {
         return ObjectArrays.toArrayImpl(delegate(), array);
       }
@@ -1052,7 +1054,7 @@ final class Synchronized {
 
     @Pure
     @Override
-    public boolean contains(@CheckForNull @UnknownSignedness Object o) {
+    public boolean contains(@CheckForNull @UnknownSignedness @Readonly Object o) {
       synchronized (mutex) {
         return Maps.containsEntryImpl(delegate(), o);
       }
@@ -1068,7 +1070,7 @@ final class Synchronized {
 
     @Pure
     @Override
-    public boolean equals(@CheckForNull @UnknownSignedness Object o) {
+    public boolean equals(@CheckForNull @UnknownSignedness @Readonly Object o) {
       if (o == this) {
         return true;
       }
@@ -1078,7 +1080,7 @@ final class Synchronized {
     }
 
     @Override
-    public boolean remove(@CheckForNull @UnknownSignedness Object o) {
+    public boolean remove(@CheckForNull @UnknownSignedness @Readonly Object o) {
       synchronized (mutex) {
         return Maps.removeEntryImpl(delegate(), o);
       }
@@ -1102,12 +1104,12 @@ final class Synchronized {
   }
 
   @VisibleForTesting
-  static <K extends @Nullable Object, V extends @Nullable Object> Map<K, V> map(
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object> Map<K, V> map(
       Map<K, V> map, @CheckForNull Object mutex) {
     return new SynchronizedMap<>(map, mutex);
   }
 
-  private static class SynchronizedMap<K extends @Nullable Object, V extends @Nullable Object>
+  private @ReceiverDependentMutable static class SynchronizedMap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedObject implements Map<K, V> {
     @CheckForNull transient Set<K> keySet;
     @CheckForNull transient Collection<V> values;
@@ -1119,7 +1121,7 @@ final class Synchronized {
 
     @SuppressWarnings("unchecked")
     @Override
-    Map<K, V> delegate() {
+    @ReceiverDependentMutable Map<K, V> delegate() {
       return (Map<K, V>) super.delegate();
     }
 
@@ -1331,12 +1333,12 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <K extends @Nullable Object, V extends @Nullable Object> SortedMap<K, V> sortedMap(
+  static <K extends @Nullable Object, V extends @Nullable  @Readonly Object> SortedMap<K, V> sortedMap(
       SortedMap<K, V> sortedMap, @CheckForNull Object mutex) {
     return new SynchronizedSortedMap<>(sortedMap, mutex);
   }
 
-  static class SynchronizedSortedMap<K extends @Nullable Object, V extends @Nullable Object>
+  static class SynchronizedSortedMap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedMap<K, V> implements SortedMap<K, V> {
 
     SynchronizedSortedMap(SortedMap<K, V> delegate, @CheckForNull Object mutex) {
@@ -1451,7 +1453,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static class SynchronizedAsMap<K extends @Nullable Object, V extends @Nullable Object>
+  private static class SynchronizedAsMap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedMap<K, Collection<V>> {
     @CheckForNull transient Set<Map.Entry<K, Collection<V>>> asMapEntrySet;
     @CheckForNull transient Collection<Collection<V>> asMapValues;
@@ -1501,7 +1503,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  private static class SynchronizedAsMapValues<V extends @Nullable Object>
+  private static class SynchronizedAsMapValues<V extends @Nullable @Readonly Object>
       extends SynchronizedCollection<Collection<V>> {
     SynchronizedAsMapValues(Collection<Collection<V>> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -1552,7 +1554,7 @@ final class Synchronized {
 
   @GwtIncompatible // NavigableSet
   @VisibleForTesting
-  static class SynchronizedNavigableSet<E extends @Nullable Object> extends SynchronizedSortedSet<E>
+  static class SynchronizedNavigableSet<E extends @Nullable @Readonly Object> extends SynchronizedSortedSet<E>
       implements NavigableSet<E> {
     SynchronizedNavigableSet(NavigableSet<E> delegate, @CheckForNull Object mutex) {
       super(delegate, mutex);
@@ -1672,31 +1674,31 @@ final class Synchronized {
   }
 
   @GwtIncompatible // NavigableSet
-  static <E extends @Nullable Object> NavigableSet<E> navigableSet(
+  static <E extends @Nullable @Readonly Object> NavigableSet<E> navigableSet(
       NavigableSet<E> navigableSet, @CheckForNull Object mutex) {
     return new SynchronizedNavigableSet<E>(navigableSet, mutex);
   }
 
   @GwtIncompatible // NavigableSet
-  static <E extends @Nullable Object> NavigableSet<E> navigableSet(NavigableSet<E> navigableSet) {
+  static <E extends @Nullable @Readonly Object> NavigableSet<E> navigableSet(NavigableSet<E> navigableSet) {
     return navigableSet(navigableSet, null);
   }
 
   @GwtIncompatible // NavigableMap
-  static <K extends @Nullable Object, V extends @Nullable Object> NavigableMap<K, V> navigableMap(
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object> NavigableMap<K, V> navigableMap(
       NavigableMap<K, V> navigableMap) {
     return navigableMap(navigableMap, null);
   }
 
   @GwtIncompatible // NavigableMap
-  static <K extends @Nullable Object, V extends @Nullable Object> NavigableMap<K, V> navigableMap(
+  static <K extends @Nullable Object, V extends @Nullable @Readonly Object> NavigableMap<K, V> navigableMap(
       NavigableMap<K, V> navigableMap, @CheckForNull Object mutex) {
     return new SynchronizedNavigableMap<>(navigableMap, mutex);
   }
 
   @GwtIncompatible // NavigableMap
   @VisibleForTesting
-  static class SynchronizedNavigableMap<K extends @Nullable Object, V extends @Nullable Object>
+  static class SynchronizedNavigableMap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedSortedMap<K, V> implements NavigableMap<K, V> {
 
     SynchronizedNavigableMap(NavigableMap<K, V> delegate, @CheckForNull Object mutex) {
@@ -1887,7 +1889,7 @@ final class Synchronized {
 
   @GwtIncompatible // works but is needed only for NavigableMap
   @CheckForNull
-  private static <K extends @Nullable Object, V extends @Nullable Object>
+  private static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       Map.Entry<K, V> nullableSynchronizedEntry(
           @CheckForNull Map.Entry<K, V> entry, @CheckForNull Object mutex) {
     if (entry == null) {
@@ -1897,7 +1899,7 @@ final class Synchronized {
   }
 
   @GwtIncompatible // works but is needed only for NavigableMap
-  private static class SynchronizedEntry<K extends @Nullable Object, V extends @Nullable Object>
+  private static class SynchronizedEntry<K extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends SynchronizedObject implements Map.Entry<K, V> {
 
     SynchronizedEntry(Map.Entry<K, V> delegate, @CheckForNull Object mutex) {
@@ -2146,7 +2148,7 @@ final class Synchronized {
     private static final long serialVersionUID = 0;
   }
 
-  static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+  static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       Table<R, C, V> table(Table<R, C, V> table, @CheckForNull Object mutex) {
     return new SynchronizedTable<>(table, mutex);
   }

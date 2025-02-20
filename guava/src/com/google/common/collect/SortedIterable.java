@@ -18,6 +18,8 @@ import com.google.common.annotations.GwtCompatible;
 import java.util.Comparator;
 import java.util.Iterator;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 
 /**
  * An {@code Iterable} whose elements are sorted relative to a {@code Comparator}, typically
@@ -27,7 +29,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-interface SortedIterable<T extends @Nullable Object> extends Iterable<T> {
+@ReceiverDependentMutable interface SortedIterable<T extends @Nullable @Readonly Object> extends Iterable<T> {
   /**
    * Returns the {@code Comparator} by which the elements of this iterable are ordered, or {@code
    * Ordering.natural()} if the elements are ordered by their natural ordering.
@@ -39,5 +41,5 @@ interface SortedIterable<T extends @Nullable Object> extends Iterable<T> {
    * order according to the associated {@link #comparator}.
    */
   @Override
-  Iterator<T> iterator();
+  @ReceiverDependentMutable Iterator<T> iterator();
 }

@@ -35,6 +35,8 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -50,7 +52,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @ElementTypesAreNonnullByDefault
-final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
+final class RegularImmutableMap<K extends @Immutable Object, V> extends ImmutableMap<K, V> {
   @SuppressWarnings("unchecked")
   static final ImmutableMap<Object, Object> EMPTY =
       new RegularImmutableMap<>((Entry<Object, Object>[]) ImmutableMap.EMPTY_ENTRY_ARRAY, null, 0);
@@ -81,7 +83,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
   // 'and' with an int to get a table index
   private final transient int mask;
 
-  static <K, V> ImmutableMap<K, V> fromEntries(Entry<K, V>... entries) {
+  static <K extends @Immutable Object , V> ImmutableMap<K, V> fromEntries(Entry<K, V>... entries) {
     return fromEntryArray(entries.length, entries, /* throwIfDuplicateKeys= */ true);
   }
 
@@ -90,8 +92,8 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
    * the entries in entryArray with its own entry objects (though they will have the same key/value
    * contents), and may take ownership of entryArray.
    */
-  static <K, V> ImmutableMap<K, V> fromEntryArray(
-      int n, @Nullable Entry<K, V>[] entryArray, boolean throwIfDuplicateKeys) {
+  static <K extends @Immutable Object, V> ImmutableMap<K, V> fromEntryArray(
+      int n, @Nullable Entry<K, V> @Mutable [] entryArray, boolean throwIfDuplicateKeys) {
     checkPositionIndex(n, entryArray.length);
     if (n == 0) {
       @SuppressWarnings("unchecked") // it has no entries so the type variables don't matter
@@ -107,7 +109,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
     }
   }
 
-  private static <K, V> ImmutableMap<K, V> fromEntryArrayCheckingBucketOverflow(
+  private static <K extends @Immutable Object, V> ImmutableMap<K, V> fromEntryArrayCheckingBucketOverflow(
       int n, @Nullable Entry<K, V>[] entryArray, boolean throwIfDuplicateKeys)
       throws BucketOverflowException {
     /*
@@ -186,7 +188,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
    *     been included in the new entry array.
    * @return an array of {@code newN} entries where no key appears more than once.
    */
-  static <K, V> Entry<K, V>[] removeDuplicates(
+  static <K extends @Immutable Object, V> Entry<K, V>[] removeDuplicates(
       Entry<K, V>[] entries, int n, int newN, IdentityHashMap<Entry<K, V>, Boolean> duplicates) {
     Entry<K, V>[] newEntries = createEntryArray(newN);
     for (int in = 0, out = 0; in < n; in++) {
@@ -206,14 +208,14 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
   }
 
   /** Makes an entry usable internally by a new ImmutableMap without rereading its contents. */
-  static <K, V> ImmutableMapEntry<K, V> makeImmutable(Entry<K, V> entry, K key, V value) {
+  static <K extends @Immutable Object, V> ImmutableMapEntry<K, V> makeImmutable(Entry<K, V> entry, K key, V value) {
     boolean reusable =
         entry instanceof ImmutableMapEntry && ((ImmutableMapEntry<K, V>) entry).isReusable();
     return reusable ? (ImmutableMapEntry<K, V>) entry : new ImmutableMapEntry<K, V>(key, value);
   }
 
   /** Makes an entry usable internally by a new ImmutableMap. */
-  static <K, V> ImmutableMapEntry<K, V> makeImmutable(Entry<K, V> entry) {
+  static <K extends @Immutable Object, V> ImmutableMapEntry<K, V> makeImmutable(Entry<K, V> entry) {
     return makeImmutable(entry, entry.getKey(), entry.getValue());
   }
 
@@ -236,7 +238,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
    *     flooding attack
    */
   @CanIgnoreReturnValue
-  static <K, V> @Nullable ImmutableMapEntry<K, V> checkNoConflictInKeyBucket(
+  static <K extends @Immutable Object, V> @Nullable ImmutableMapEntry<K, V> checkNoConflictInKeyBucket(
       Object key,
       Object newValue,
       @CheckForNull ImmutableMapEntry<K, V> keyBucketHead,
@@ -323,7 +325,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
   }
 
   @GwtCompatible(emulated = true)
-  private static final class KeySet<K> extends IndexedImmutableSet<K> {
+  private static final class KeySet<K extends @Immutable Object> extends IndexedImmutableSet<K> {
     private final RegularImmutableMap<K, ?> map;
 
     KeySet(RegularImmutableMap<K, ?> map) {
@@ -353,7 +355,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
     // No longer used for new writes, but kept so that old data can still be read.
     @GwtIncompatible // serialization
     @SuppressWarnings("unused")
-    private static class SerializedForm<K> implements Serializable {
+    private static class SerializedForm<K extends @Immutable Object> implements Serializable {
       final ImmutableMap<K, ?> map;
 
       SerializedForm(ImmutableMap<K, ?> map) {
@@ -374,7 +376,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
   }
 
   @GwtCompatible(emulated = true)
-  private static final class Values<K, V> extends ImmutableList<V> {
+  private static final class Values<K extends @Immutable Object, V> extends ImmutableList<V> {
     final RegularImmutableMap<K, V> map;
 
     Values(RegularImmutableMap<K, V> map) {

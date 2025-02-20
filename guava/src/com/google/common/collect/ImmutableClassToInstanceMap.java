@@ -22,11 +22,13 @@ import com.google.common.annotations.GwtIncompatible;
 import com.google.common.primitives.Primitives;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
-import com.google.errorprone.annotations.Immutable;
+//import com.google.errorprone.annotations.Immutable;
 import java.io.Serializable;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -37,7 +39,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
  * @since 2.0
  */
 @AnnotatedFor({"nullness"})
-@Immutable(containerOf = "B")
+//@Immutable(containerOf = "B")
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 public final class ImmutableClassToInstanceMap<B> extends ForwardingMap<Class<? extends B>, B>
@@ -63,7 +65,7 @@ public final class ImmutableClassToInstanceMap<B> extends ForwardingMap<Class<? 
    *
    * @since 19.0
    */
-  public static <B, T extends B> ImmutableClassToInstanceMap<B> of(Class<T> type, T value) {
+  public static <B extends @Immutable Object, T extends B> ImmutableClassToInstanceMap<B> of(Class<T> type, T value) {
     ImmutableMap<Class<? extends B>, B> map = ImmutableMap.<Class<? extends B>, B>of(type, value);
     return new ImmutableClassToInstanceMap<>(map);
   }
@@ -93,7 +95,7 @@ public final class ImmutableClassToInstanceMap<B> extends ForwardingMap<Class<? 
    *
    * @since 2.0
    */
-  public static final class Builder<B> {
+  public static final @Mutable class Builder<B> {
     private final ImmutableMap.Builder<Class<? extends B>, B> mapBuilder = ImmutableMap.builder();
 
     /**

@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -43,7 +44,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @Beta
 @GwtIncompatible // uses NavigableMap
 @ElementTypesAreNonnullByDefault
-public class TreeRangeSet<C extends Comparable<?>> extends AbstractRangeSet<C>
+public @ReceiverDependentMutable class TreeRangeSet<C extends Comparable<?>> extends AbstractRangeSet<C>
     implements Serializable {
 
   @VisibleForTesting final NavigableMap<Cut<C>, Range<C>> rangesByLowerBound;
@@ -453,7 +454,7 @@ public class TreeRangeSet<C extends Comparable<?>> extends AbstractRangeSet<C>
     }
   }
 
-  private static final class ComplementRangesByLowerBound<C extends Comparable<?>>
+  private @ReceiverDependentMutable static final class ComplementRangesByLowerBound<C extends Comparable<?>>
       extends AbstractNavigableMap<Cut<C>, Range<C>> {
     private final NavigableMap<Cut<C>, Range<C>> positiveRangesByLowerBound;
     private final NavigableMap<Cut<C>, Range<C>> positiveRangesByUpperBound;

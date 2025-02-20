@@ -27,6 +27,9 @@ import java.util.SortedMap;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -36,7 +39,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractNavigableMap<K extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable abstract class AbstractNavigableMap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends IteratorBasedAbstractMap<K, V> implements NavigableMap<K, V> {
 
   @Override
@@ -174,7 +177,7 @@ abstract class AbstractNavigableMap<K extends @Nullable Object, V extends @Nulla
     return new DescendingMap();
   }
 
-  private final class DescendingMap extends Maps.DescendingMap<K, V> {
+  private @Mutable final class DescendingMap extends Maps.DescendingMap<K, V> {
     @Override
     NavigableMap<K, V> forward() {
       return AbstractNavigableMap.this;

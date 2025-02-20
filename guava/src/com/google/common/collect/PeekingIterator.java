@@ -22,6 +22,7 @@ import com.google.errorprone.annotations.DoNotMock;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -38,7 +39,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @GwtCompatible
 @AnnotatedFor({"nullness"})
 @ElementTypesAreNonnullByDefault
-public interface PeekingIterator<E extends @Nullable Object> extends Iterator<E> {
+public interface PeekingIterator<E extends @Nullable @Readonly Object> extends Iterator<E> {
   /**
    * Returns the next element in the iteration, without advancing the iteration.
    *

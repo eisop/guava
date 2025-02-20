@@ -23,6 +23,7 @@ import java.util.Spliterators;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -48,7 +49,7 @@ final class RegularImmutableSet<E> extends ImmutableSet.CachingAsList<E> {
   // 'and' with an int to get a valid table index.
   private final transient int mask;
 
-  RegularImmutableSet(Object[] elements, int hashCode, @Nullable Object[] table, int mask) {
+  RegularImmutableSet(Object @Readonly [] elements, int hashCode, @Nullable Object[] table, int mask) {
     this.elements = elements;
     this.hashCode = hashCode;
     this.table = table;

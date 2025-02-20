@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -38,7 +40,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractListMultimap<K extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable abstract class AbstractListMultimap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends AbstractMapBasedMultimap<K, V> implements ListMultimap<K, V> {
   /**
    * Creates a new multimap that uses the provided map.

@@ -18,19 +18,20 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.ImmutableMap.IteratorBasedImmutableMap;
-import com.google.errorprone.annotations.Immutable;
+//import com.google.errorprone.annotations.Immutable;
 import com.google.j2objc.annotations.WeakOuter;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /** A {@code RegularImmutableTable} optimized for dense data. */
 @GwtCompatible
-@Immutable(containerOf = {"R", "C", "V"})
+//@Immutable(containerOf = {"R", "C", "V"})
 @ElementTypesAreNonnullByDefault
-final class DenseImmutableTable<R, C, V> extends RegularImmutableTable<R, C, V> {
+final class DenseImmutableTable<R extends @Immutable Object, C extends @Immutable Object, V> extends RegularImmutableTable<R, C, V> {
   private final ImmutableMap<R, Integer> rowKeyToIndex;
   private final ImmutableMap<C, Integer> columnKeyToIndex;
   private final ImmutableMap<R, ImmutableMap<C, V>> rowMap;
@@ -89,7 +90,7 @@ final class DenseImmutableTable<R, C, V> extends RegularImmutableTable<R, C, V> 
   }
 
   /** An immutable map implementation backed by an indexed nullable array. */
-  private abstract static class ImmutableArrayMap<K, V> extends IteratorBasedImmutableMap<K, V> {
+  private abstract static class ImmutableArrayMap<K extends @Immutable Object, V> extends IteratorBasedImmutableMap<K, V> {
     private final int size;
 
     ImmutableArrayMap(int size) {

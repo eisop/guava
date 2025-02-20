@@ -16,6 +16,7 @@
 package com.google.common.collect;
 
 import com.google.common.annotations.GwtCompatible;
+import org.checkerframework.checker.pico.qual.Immutable;
 
 /**
  * A dummy superclass of {@link ImmutableMultimap} that can be instanceof'd without ProGuard
@@ -23,4 +24,4 @@ import com.google.common.annotations.GwtCompatible;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class BaseImmutableMultimap<K, V> extends AbstractMultimap<K, V> {}
+abstract class BaseImmutableMultimap<K extends @Immutable Object, V> extends AbstractMultimap<K, V> {}

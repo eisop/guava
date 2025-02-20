@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Iterator;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /**
  * An iterator that transforms a backing iterator; for internal use. This avoids the object overhead
@@ -30,7 +31,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class TransformedIterator<F extends @Nullable Object, T extends @Nullable Object>
+abstract class TransformedIterator<F extends @Nullable @Readonly Object, T extends @Nullable @Readonly Object>
     implements Iterator<T> {
   final Iterator<? extends F> backingIterator;
 

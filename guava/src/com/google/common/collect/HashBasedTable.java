@@ -24,6 +24,8 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.checkerframework.checker.pico.qual.Immutable;
+
 /**
  * Implementation of {@link Table} using linked hash tables. This guarantees predictable iteration
  * order of the various views.
@@ -48,8 +50,8 @@ import java.util.Map;
  */
 @GwtCompatible(serializable = true)
 @ElementTypesAreNonnullByDefault
-public class HashBasedTable<R, C, V> extends StandardTable<R, C, V> {
-  private static class Factory<C, V> implements Supplier<Map<C, V>>, Serializable {
+public class HashBasedTable<R extends @Immutable Object, C extends @Immutable Object, V> extends StandardTable<R, C, V> {
+  private static class Factory<C extends @Immutable Object, V> implements Supplier<Map<C, V>>, Serializable {
     final int expectedSize;
 
     Factory(int expectedSize) {
@@ -65,7 +67,7 @@ public class HashBasedTable<R, C, V> extends StandardTable<R, C, V> {
   }
 
   /** Creates an empty {@code HashBasedTable}. */
-  public static <R, C, V> HashBasedTable<R, C, V> create() {
+  public static <R extends @Immutable Object, C extends @Immutable Object, V> HashBasedTable<R, C, V> create() {
     return new HashBasedTable<>(new LinkedHashMap<R, Map<C, V>>(), new Factory<C, V>(0));
   }
 
@@ -77,7 +79,7 @@ public class HashBasedTable<R, C, V> extends StandardTable<R, C, V> {
    * @throws IllegalArgumentException if {@code expectedRows} or {@code expectedCellsPerRow} is
    *     negative
    */
-  public static <R, C, V> HashBasedTable<R, C, V> create(
+  public static <R extends @Immutable Object, C extends @Immutable Object, V> HashBasedTable<R, C, V> create(
       int expectedRows, int expectedCellsPerRow) {
     checkNonnegative(expectedCellsPerRow, "expectedCellsPerRow");
     Map<R, Map<C, V>> backingMap = Maps.newLinkedHashMapWithExpectedSize(expectedRows);
@@ -91,7 +93,7 @@ public class HashBasedTable<R, C, V> extends StandardTable<R, C, V> {
    * @throws NullPointerException if any of the row keys, column keys, or values in {@code table} is
    *     null
    */
-  public static <R, C, V> HashBasedTable<R, C, V> create(
+  public static <R extends @Immutable Object, C extends @Immutable Object, V> HashBasedTable<R, C, V> create(
       Table<? extends R, ? extends C, ? extends V> table) {
     HashBasedTable<R, C, V> result = create();
     result.putAll(table);

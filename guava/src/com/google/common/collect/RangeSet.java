@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.DoNotMock;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import javax.annotation.CheckForNull;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -54,7 +55,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @DoNotMock("Use ImmutableRangeSet or TreeRangeSet")
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
-public interface RangeSet<C extends Comparable> {
+public @ReceiverDependentMutable interface RangeSet<C extends Comparable> {
   // TODO(lowasser): consider adding default implementations of some of these methods
 
   // Query methods

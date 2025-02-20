@@ -21,6 +21,7 @@ import com.google.errorprone.annotations.DoNotMock;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -35,7 +36,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @GwtCompatible
 @AnnotatedFor({"nullness"})
 @ElementTypesAreNonnullByDefault
-public interface MapDifference<K extends @Nullable Object, V extends @Nullable Object> {
+public interface MapDifference<K extends @Nullable Object, V extends @Nullable @Readonly Object> {
   /**
    * Returns {@code true} if there are no differences between the two maps; that is, if the maps are
    * equal.
@@ -95,7 +96,7 @@ public interface MapDifference<K extends @Nullable Object, V extends @Nullable O
    * @since 2.0
    */
   @DoNotMock("Use Maps.difference")
-  interface ValueDifference<V extends @Nullable Object> {
+  interface ValueDifference<V extends @Nullable @Readonly Object> {
     /** Returns the value from the left map (possibly null). */
     @ParametricNullness
     V leftValue();

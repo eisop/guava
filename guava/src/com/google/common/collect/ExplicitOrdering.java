@@ -21,6 +21,8 @@ import java.io.Serializable;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -29,7 +31,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true)
 @ElementTypesAreNonnullByDefault
-final class ExplicitOrdering<T> extends Ordering<T> implements Serializable {
+final class ExplicitOrdering<T extends @Immutable Object> extends Ordering<T> implements Serializable {
   final ImmutableMap<T, Integer> rankMap;
 
   ExplicitOrdering(List<T> valuesInOrder) {

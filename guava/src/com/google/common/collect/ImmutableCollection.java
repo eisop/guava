@@ -36,10 +36,13 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * A {@link Collection} whose contents will never change, and which offers a few additional
@@ -173,7 +176,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @ElementTypesAreNonnullByDefault
 // TODO(kevinb): I think we should push everything down to "BaseImmutableCollection" or something,
 // just to do everything we can to emphasize the "practically an interface" nature of this class.
-public abstract class ImmutableCollection<E extends @NonNull Object> extends AbstractCollection<E> implements Serializable {
+public abstract class ImmutableCollection<E extends @NonNull @Readonly Object> extends AbstractCollection<E> implements Serializable {
   /*
    * We expect SIZED (and SUBSIZED, if applicable) to be added by the spliterator factory methods.
    * These are properties of the collection as a whole; SIZED and SUBSIZED are more properties of
@@ -192,11 +195,11 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
   public Spliterator<E> spliterator() {
     return Spliterators.spliterator(this, SPLITERATOR_CHARACTERISTICS);
   }
-
-  private static final Object[] EMPTY_ARRAY = {};
+  @CFComment("Not sure how to annotate {} directly")
+  private static final Object @Mutable [] EMPTY_ARRAY = new Object @Mutable [0];
 
   @Override
-  public final @PolyNull @PolySigned Object[] toArray() {
+  public final @PolyNull @PolySigned Object @Mutable [] toArray() {
     return toArray(EMPTY_ARRAY);
   }
 
@@ -215,7 +218,7 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
    * nullness perspective. The signature below at least has the virtue of being relatively simple.
    */
   @SuppressWarnings({"nullness:return", "nullness:assignment"})
-  public final <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] other) {
+  public final <T extends @Nullable @UnknownSignedness @Readonly Object> T @Mutable [] toArray(@PolyNull T @Mutable [] other) {
     checkNotNull(other);
     int size = size();
 
@@ -388,7 +391,7 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
    * offset. Returns {@code offset + size()}.
    */
   @CanIgnoreReturnValue
-  int copyIntoArray(@Nullable Object[] dst, int offset) {
+  int copyIntoArray(@Nullable @Readonly Object @Mutable [] dst, int offset) {
     for (E e : this) {
       dst[offset++] = e;
     }
@@ -406,7 +409,7 @@ public abstract class ImmutableCollection<E extends @NonNull Object> extends Abs
    * @since 10.0
    */
   @DoNotMock
-  public abstract static class Builder<E> {
+  public abstract static @Mutable class Builder<E> {
     static final int DEFAULT_INITIAL_CAPACITY = 4;
 
     static int expandedCapacity(int oldCapacity, int minCapacity) {

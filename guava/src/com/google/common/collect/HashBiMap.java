@@ -44,6 +44,9 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Assignable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -65,7 +68,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Object>
+public final @ReceiverDependentMutable class HashBiMap<K extends @Nullable Object, V extends @Nullable Object>
     extends IteratorBasedAbstractMap<K, V> implements BiMap<K, V>, Serializable {
 
   /** Returns a new, empty {@code HashBiMap} with the default initial capacity (16). */
@@ -126,13 +129,13 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
    * they are not initialized inline in the constructor, they are initialized from init(), which the
    * constructor calls (as does readObject()).
    */
-  private transient @Nullable BiEntry<K, V>[] hashTableKToV;
-  private transient @Nullable BiEntry<K, V>[] hashTableVToK;
-  @Weak @CheckForNull private transient BiEntry<K, V> firstInKeyInsertionOrder;
-  @Weak @CheckForNull private transient BiEntry<K, V> lastInKeyInsertionOrder;
-  private transient int size;
-  private transient int mask;
-  private transient int modCount;
+  private transient @Nullable @Assignable BiEntry<K, V>[] hashTableKToV;
+  private transient @Nullable @Assignable BiEntry<K, V>[] hashTableVToK;
+  @Weak @CheckForNull private transient @Assignable BiEntry<K, V> firstInKeyInsertionOrder;
+  @Weak @CheckForNull private transient @Assignable BiEntry<K, V> lastInKeyInsertionOrder;
+  private transient @Assignable int size;
+  private transient @Assignable int mask;
+  private transient @Assignable int modCount;
 
   private HashBiMap(int expectedSize) {
     init(expectedSize);
@@ -603,7 +606,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     return (result == null) ? inverse = new Inverse() : result;
   }
 
-  private final class Inverse extends IteratorBasedAbstractMap<V, K>
+  private @Mutable final class Inverse extends IteratorBasedAbstractMap<V, K>
       implements BiMap<V, K>, Serializable {
     BiMap<K, V> forward() {
       return HashBiMap.this;

@@ -23,6 +23,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /**
  * This class provides a skeletal implementation of the {@link ListIterator} interface across a
@@ -33,7 +34,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractIndexedListIterator<E extends @Nullable Object>
+abstract class AbstractIndexedListIterator<E extends @Nullable @Readonly Object>
     extends UnmodifiableListIterator<E> {
   private final int size;
   private int position;

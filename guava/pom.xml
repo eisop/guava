@@ -160,7 +160,7 @@
               <!-- Default is supress all index checker warnings. -->
               <arg>-AsuppressWarnings=${checkerframework.suppress}</arg>
               <arg>-XDignore.symbol.file</arg>  <!-- suppress any warnings for using 'Unsafe' -->
-              <arg>-AuseDefaultsForUncheckedCode=source,bytecode</arg>
+              <arg>-AuseConservativeDefaultsForUncheckedCode=-source,-bytecode</arg>
               <arg>-AshowSuppressWarningsStrings</arg>
               <arg>-AwarnUnneededSuppressions</arg>
             </compilerArgs>

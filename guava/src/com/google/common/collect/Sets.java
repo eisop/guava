@@ -56,6 +56,10 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
@@ -83,14 +87,14 @@ public final class Sets {
    * {@link AbstractSet} substitute without the potentially-quadratic {@code removeAll}
    * implementation.
    */
-  abstract static class ImprovedAbstractSet<E extends @Nullable Object> extends AbstractSet<E> {
+  @ReceiverDependentMutable abstract static class ImprovedAbstractSet<E extends @Nullable @Readonly Object> extends AbstractSet<E> {
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@Mutable ImprovedAbstractSet<E> this, Collection<?> c) {
       return removeAllImpl(this, c);
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@Mutable ImprovedAbstractSet<E> this, Collection<?> c) {
       return super.retainAll(checkNotNull(c)); // GWT compatibility
     }
   }
@@ -261,9 +265,9 @@ public final class Sets {
    *     without resizing
    * @throws IllegalArgumentException if {@code expectedSize} is negative
    */
-  public static <E extends @Nullable Object> HashSet<E> newHashSetWithExpectedSize(
+  public static <E extends @Nullable @Readonly Object> @Mutable HashSet<E> newHashSetWithExpectedSize(
       int expectedSize) {
-    return new HashSet<E>(Maps.capacity(expectedSize));
+    return new @Mutable HashSet<E>(Maps.capacity(expectedSize));
   }
 
   /**
@@ -312,7 +316,7 @@ public final class Sets {
    *
    * @return a new, empty {@code LinkedHashSet}
    */
-  public static <E extends @Nullable Object> LinkedHashSet<E> newLinkedHashSet() {
+  public static <E extends @Nullable @Readonly Object> LinkedHashSet<E> newLinkedHashSet() {
     return new LinkedHashSet<E>();
   }
 
@@ -353,7 +357,7 @@ public final class Sets {
    * @throws IllegalArgumentException if {@code expectedSize} is negative
    * @since 11.0
    */
-  public static <E extends @Nullable Object> LinkedHashSet<E> newLinkedHashSetWithExpectedSize(
+  public static <E extends @Nullable @Readonly Object> LinkedHashSet<E> newLinkedHashSetWithExpectedSize(
       int expectedSize) {
     return new LinkedHashSet<E>(Maps.capacity(expectedSize));
   }
@@ -1041,7 +1045,7 @@ public final class Sets {
    * you to migrate to streams.
    */
   // TODO(kevinb): how to omit that last sentence when building GWT javadoc?
-  public static <E extends @Nullable Object> Set<E> filter(
+  public static <E extends @Nullable @Readonly Object> Set<E> filter(
       Set<E> unfiltered, Predicate<? super E> predicate) {
     if (unfiltered instanceof SortedSet) {
       return filter((SortedSet<E>) unfiltered, predicate);
@@ -1081,7 +1085,7 @@ public final class Sets {
    *
    * @since 11.0
    */
-  public static <E extends @Nullable Object> SortedSet<E> filter(
+  public static <E extends @Nullable @Readonly Object> SortedSet<E> filter(
       SortedSet<E> unfiltered, Predicate<? super E> predicate) {
     if (unfiltered instanceof FilteredSet) {
       // Support clear(), removeAll(), and retainAll() when filtering a filtered
@@ -1133,7 +1137,7 @@ public final class Sets {
     return new FilteredNavigableSet<E>(checkNotNull(unfiltered), checkNotNull(predicate));
   }
 
-  private static class FilteredSet<E extends @Nullable Object> extends FilteredCollection<E>
+  private static class FilteredSet<E extends @Nullable @Readonly Object> extends FilteredCollection<E>
       implements Set<E> {
     FilteredSet(Set<E> unfiltered, Predicate<? super E> predicate) {
       super(unfiltered, predicate);
@@ -1150,7 +1154,7 @@ public final class Sets {
     }
   }
 
-  private static class FilteredSortedSet<E extends @Nullable Object> extends FilteredSet<E>
+  private static class FilteredSortedSet<E extends @Nullable @Readonly Object> extends FilteredSet<E>
       implements SortedSet<E> {
 
     FilteredSortedSet(SortedSet<E> unfiltered, Predicate<? super E> predicate) {
@@ -1200,7 +1204,7 @@ public final class Sets {
   }
 
   @GwtIncompatible // NavigableSet
-  private static class FilteredNavigableSet<E extends @Nullable Object> extends FilteredSortedSet<E>
+  private static class FilteredNavigableSet<E extends @Nullable @Readonly Object> extends FilteredSortedSet<E>
       implements NavigableSet<E> {
     FilteredNavigableSet(NavigableSet<E> unfiltered, Predicate<? super E> predicate) {
       super(unfiltered, predicate);
@@ -1521,11 +1525,11 @@ public final class Sets {
    * @since 4.0
    */
   @GwtCompatible(serializable = false)
-  public static <E> Set<Set<E>> powerSet(Set<E> set) {
+  public static <E extends @Immutable Object> Set<@Readonly Set<E>> powerSet(@Readonly Set<E> set) {
     return new PowerSet<E>(set);
   }
 
-  private static final class SubSet<E> extends AbstractSet<E> {
+  private static final class SubSet<E extends @Immutable Object> extends AbstractSet<E> {
     private final ImmutableMap<E, Integer> inputSet;
     private final int mask;
 
@@ -1569,10 +1573,10 @@ public final class Sets {
     }
   }
 
-  private static final class PowerSet<E> extends AbstractSet<Set<E>> {
+  private static final class PowerSet<E extends @Immutable Object> extends AbstractSet<@Readonly Set<E>> {
     final ImmutableMap<E, Integer> inputSet;
 
-    PowerSet(Set<E> input) {
+    PowerSet(@Readonly Set<E> input) {
       checkArgument(
           input.size() <= 30, "Too many elements to create power set: %s > 30", input.size());
       this.inputSet = Maps.indexMap(input);
@@ -1657,7 +1661,7 @@ public final class Sets {
    * @since 23.0
    */
   @Beta
-  public static <E> Set<Set<E>> combinations(Set<E> set, final int size) {
+  public static <E extends @Immutable Object> Set<Set<E>> combinations(Set<E> set, final int size) {
     final ImmutableMap<E, Integer> index = Maps.indexMap(set);
     checkNonnegative(size, "size");
     checkArgument(size <= index.size(), "size (%s) must be <= set.size() (%s)", size, index.size());
@@ -1759,7 +1763,7 @@ public final class Sets {
 
   /** An implementation for {@link Set#hashCode()}. */
   @Pure
-  static int hashCodeImpl(Set<?> s) {
+  static int hashCodeImpl(@Readonly Set<?> s) {
     int hashCode = 0;
     for (Object o : s) {
       hashCode += o != null ? o.hashCode() : 0;
@@ -1771,7 +1775,7 @@ public final class Sets {
   }
 
   /** An implementation for {@link Set#equals(Object)}. */
-  static boolean equalsImpl(Set<?> s, @CheckForNull @UnknownSignedness Object object) {
+  static boolean equalsImpl(@Readonly Set<?> s, @CheckForNull @UnknownSignedness Object object) {
     if (s == object) {
       return true;
     }
@@ -1800,7 +1804,7 @@ public final class Sets {
    * @return an unmodifiable view of the specified navigable set
    * @since 12.0
    */
-  public static <E extends @Nullable Object> NavigableSet<E> unmodifiableNavigableSet(
+  public static <E extends @Nullable @Readonly Object> NavigableSet<E> unmodifiableNavigableSet(
       NavigableSet<E> set) {
     if (set instanceof ImmutableCollection || set instanceof UnmodifiableNavigableSet) {
       return set;
@@ -1808,7 +1812,7 @@ public final class Sets {
     return new UnmodifiableNavigableSet<E>(set);
   }
 
-  static final class UnmodifiableNavigableSet<E extends @Nullable Object>
+  static final class UnmodifiableNavigableSet<E extends @Nullable @Readonly Object>
       extends ForwardingSortedSet<E> implements NavigableSet<E>, Serializable {
     private final NavigableSet<E> delegate;
     private final SortedSet<E> unmodifiableDelegate;
@@ -1967,13 +1971,13 @@ public final class Sets {
    * @since 13.0
    */
   @GwtIncompatible // NavigableSet
-  public static <E extends @Nullable Object> NavigableSet<E> synchronizedNavigableSet(
+  public static <E extends @Nullable @Readonly Object> NavigableSet<E> synchronizedNavigableSet(
       NavigableSet<E> navigableSet) {
     return Synchronized.navigableSet(navigableSet);
   }
 
   /** Remove each element in an iterable from a set. */
-  static boolean removeAllImpl(Set<?> set, Iterator<?> iterator) {
+  static boolean removeAllImpl(@Mutable Set<?> set, Iterator<?> iterator) {
     boolean changed = false;
     while (iterator.hasNext()) {
       changed |= set.remove(iterator.next());
@@ -1981,7 +1985,7 @@ public final class Sets {
     return changed;
   }
 
-  static boolean removeAllImpl(Set<?> set, Collection<?> collection) {
+  static boolean removeAllImpl(@Mutable Set<?> set, Collection<?> collection) {
     checkNotNull(collection); // for GWT
     if (collection instanceof Multiset) {
       collection = ((Multiset<?>) collection).elementSet();
@@ -2001,7 +2005,7 @@ public final class Sets {
   }
 
   @GwtIncompatible // NavigableSet
-  static class DescendingSet<E extends @Nullable Object> extends ForwardingNavigableSet<E> {
+  static class DescendingSet<E extends @Nullable @Readonly Object> extends ForwardingNavigableSet<E> {
     private final NavigableSet<E> forward;
 
     DescendingSet(NavigableSet<E> forward) {
@@ -2105,7 +2109,7 @@ public final class Sets {
     }
 
     // If we inline this, we get a javac error.
-    private static <T extends @Nullable Object> Ordering<T> reverse(Comparator<T> forward) {
+    private static <T extends @Nullable @Readonly Object> Ordering<T> reverse(Comparator<T> forward) {
       return Ordering.from(forward).reverse();
     }
 

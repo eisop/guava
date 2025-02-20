@@ -44,6 +44,8 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -78,7 +80,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends BaseImmutableMultimap<K, V>
+public abstract class ImmutableMultimap<K extends @Immutable Object, V extends @Immutable Object> extends BaseImmutableMultimap<K, V>
     implements Serializable {
 
   /**
@@ -86,17 +88,17 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    *
    * <p><b>Performance note:</b> the instance returned is a singleton.
    */
-  public static <K, V> ImmutableMultimap<K, V> of() {
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> of() {
     return ImmutableListMultimap.of();
   }
 
   /** Returns an immutable multimap containing a single entry. */
-  public static <K, V> ImmutableMultimap<K, V> of(K k1, V v1) {
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> of(K k1, V v1) {
     return ImmutableListMultimap.of(k1, v1);
   }
 
   /** Returns an immutable multimap containing the given entries, in order. */
-  public static <K, V> ImmutableMultimap<K, V> of(K k1, V v1, K k2, V v2) {
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> of(K k1, V v1, K k2, V v2) {
     return ImmutableListMultimap.of(k1, v1, k2, v2);
   }
 
@@ -104,7 +106,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    * Returns an immutable multimap containing the given entries, in the "key-grouped" insertion
    * order described in the <a href="#iteration">class documentation</a>.
    */
-  public static <K, V> ImmutableMultimap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
     return ImmutableListMultimap.of(k1, v1, k2, v2, k3, v3);
   }
 
@@ -112,7 +114,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    * Returns an immutable multimap containing the given entries, in the "key-grouped" insertion
    * order described in the <a href="#iteration">class documentation</a>.
    */
-  public static <K, V> ImmutableMultimap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
     return ImmutableListMultimap.of(k1, v1, k2, v2, k3, v3, k4, v4);
   }
 
@@ -120,7 +122,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    * Returns an immutable multimap containing the given entries, in the "key-grouped" insertion
    * order described in the <a href="#iteration">class documentation</a>.
    */
-  public static <K, V> ImmutableMultimap<K, V> of(
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> of(
       K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
     return ImmutableListMultimap.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5);
   }
@@ -131,7 +133,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    * Returns a new builder. The generated builder is equivalent to the builder created by the {@link
    * Builder} constructor.
    */
-  public static <K, V> Builder<K, V> builder() {
+  public static <K extends @Immutable Object, V extends @Immutable Object> Builder<K, V> builder() {
     return new Builder<>();
   }
 
@@ -155,7 +157,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    * @since 2.0
    */
   @DoNotMock
-  public static class Builder<K, V> {
+  public static @Mutable class Builder<K extends @Immutable Object, V extends @Immutable Object> {
     final Map<K, Collection<V>> builderMap;
     @CheckForNull Comparator<? super K> keyComparator;
     @CheckForNull Comparator<? super V> valueComparator;
@@ -168,8 +170,8 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
       this.builderMap = Platform.preservesInsertionOrderOnPutsMap();
     }
 
-    Collection<V> newMutableValueCollection() {
-      return new ArrayList<>();
+    @Mutable Collection<V> newMutableValueCollection() {
+      return new @Mutable ArrayList<>();
     }
 
     /** Adds a key-value mapping to the built multimap. */
@@ -319,7 +321,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    *
    * @throws NullPointerException if any key or value in {@code multimap} is null
    */
-  public static <K, V> ImmutableMultimap<K, V> copyOf(Multimap<? extends K, ? extends V> multimap) {
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> copyOf(Multimap<? extends K, ? extends V> multimap) {
     if (multimap instanceof ImmutableMultimap) {
       @SuppressWarnings("unchecked") // safe since multimap is not writable
       ImmutableMultimap<K, V> kvMultimap = (ImmutableMultimap<K, V>) multimap;
@@ -339,7 +341,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
    * @since 19.0
    */
   @Beta
-  public static <K, V> ImmutableMultimap<K, V> copyOf(
+  public static <K extends @Immutable Object, V extends @Immutable Object> ImmutableMultimap<K, V> copyOf(
       Iterable<? extends Entry<? extends K, ? extends V>> entries) {
     return ImmutableListMultimap.copyOf(entries);
   }
@@ -558,7 +560,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
     return new EntryCollection<>(this);
   }
 
-  private static class EntryCollection<K, V> extends ImmutableCollection<Entry<K, V>> {
+  private static class EntryCollection<K extends @Immutable Object, V extends @Immutable Object> extends ImmutableCollection<Entry<K, V>> {
     @Weak final ImmutableMultimap<K, V> multimap;
 
     EntryCollection(ImmutableMultimap<K, V> multimap) {
@@ -751,7 +753,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
     };
   }
 
-  private static final class Values<K, V> extends ImmutableCollection<V> {
+  private static final class Values<K extends @Immutable Object, V extends @Immutable Object> extends ImmutableCollection<V> {
     @Weak private final transient ImmutableMultimap<K, V> multimap;
 
     Values(ImmutableMultimap<K, V> multimap) {
@@ -793,7 +795,7 @@ public abstract class ImmutableMultimap<K extends @Immutable Object, V> extends 
 
   private static final long serialVersionUID = 0;
 
-public boolean containsEntry(@Nullable Object arg0, @Nullable Object arg1) { return super.containsEntry(arg0, arg1); }
+public boolean containsEntry(@Nullable @Readonly Object arg0, @Nullable @Readonly Object arg1) { return super.containsEntry(arg0, arg1); }
 
 public boolean equals(@Nullable Object arg0) { return super.equals(arg0); }
 }

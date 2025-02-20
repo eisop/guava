@@ -23,6 +23,7 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -459,7 +460,7 @@ public final class Preconditions {
    */
   @Pure
   public static void checkArgument(
-      boolean b, String errorMessageTemplate, @CheckForNull Object p1, @CheckForNull Object p2) {
+      boolean b, String errorMessageTemplate, @CheckForNull @Readonly Object p1, @CheckForNull Object p2) {
     if (!b) {
       throw new IllegalArgumentException(lenientFormat(errorMessageTemplate, p1, p2));
     }
@@ -495,10 +496,10 @@ public final class Preconditions {
   public static void checkArgument(
       boolean b,
       String errorMessageTemplate,
-      @CheckForNull Object p1,
-      @CheckForNull Object p2,
-      @CheckForNull Object p3,
-      @CheckForNull Object p4) {
+      @CheckForNull @Readonly Object p1,
+      @CheckForNull @Readonly Object p2,
+      @CheckForNull @Readonly Object p3,
+      @CheckForNull @Readonly Object p4) {
     if (!b) {
       throw new IllegalArgumentException(lenientFormat(errorMessageTemplate, p1, p2, p3, p4));
     }

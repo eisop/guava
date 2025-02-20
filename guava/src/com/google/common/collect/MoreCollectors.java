@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collector;
 import org.checkerframework.checker.nullness.qual.Nullable;
-
+import org.checkerframework.checker.pico.qual.Mutable;
 /**
  * Collectors not present in {@code java.util.stream.Collectors} that are not otherwise associated
  * with a {@code com.google.common} type.
@@ -94,7 +94,7 @@ public final class MoreCollectors {
     static final int MAX_EXTRAS = 4;
 
     @Nullable Object element;
-    List<Object> extras;
+    @Mutable List<Object> extras;
 
     ToOptionalState() {
       element = null;

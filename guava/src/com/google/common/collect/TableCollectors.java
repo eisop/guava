@@ -27,13 +27,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /** Collectors utilities for {@code common.collect.Table} internals. */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
 final class TableCollectors {
 
-  static <T extends @Nullable Object, R, C, V>
+  static <T extends @Nullable Object, R extends @Immutable Object, C extends @Immutable Object, V>
       Collector<T, ?, ImmutableTable<R, C, V>> toImmutableTable(
           Function<? super T, ? extends R> rowFunction,
           Function<? super T, ? extends C> columnFunction,
@@ -49,7 +52,7 @@ final class TableCollectors {
         ImmutableTable.Builder::build);
   }
 
-  static <T extends @Nullable Object, R, C, V>
+  static <T extends @Nullable Object, R extends @Immutable Object, C extends @Immutable Object, V>
       Collector<T, ?, ImmutableTable<R, C, V>> toImmutableTable(
           Function<? super T, ? extends R> rowFunction,
           Function<? super T, ? extends C> columnFunction,
@@ -80,10 +83,10 @@ final class TableCollectors {
   }
 
   static <
-          T extends @Nullable Object,
+          T extends @Nullable @Readonly Object,
           R extends @Nullable Object,
           C extends @Nullable Object,
-          V extends @Nullable Object,
+          V extends @Nullable @Readonly Object,
           I extends Table<R, C, V>>
       Collector<T, ?, I> toTable(
           java.util.function.Function<? super T, ? extends R> rowFunction,
@@ -101,10 +104,10 @@ final class TableCollectors {
   }
 
   static <
-          T extends @Nullable Object,
+          T extends @Nullable @Readonly Object,
           R extends @Nullable Object,
           C extends @Nullable Object,
-          V extends @Nullable Object,
+          V extends @Nullable @Readonly Object,
           I extends Table<R, C, V>>
       Collector<T, ?, I> toTable(
           java.util.function.Function<? super T, ? extends R> rowFunction,
@@ -135,9 +138,9 @@ final class TableCollectors {
         });
   }
 
-  private static final class ImmutableTableCollectorState<R, C, V> {
-    final List<MutableCell<R, C, V>> insertionOrder = new ArrayList<>();
-    final Table<R, C, MutableCell<R, C, V>> table = HashBasedTable.create();
+  private static final class ImmutableTableCollectorState<R extends @Immutable Object, C extends @Immutable Object, V> {
+    final @Mutable List<MutableCell<R, C, V>> insertionOrder = new ArrayList<>();
+    final @Mutable Table<R, C, MutableCell<R, C, V>> table = HashBasedTable.create();
 
     void put(R row, C column, V value, BinaryOperator<V> merger) {
       MutableCell<R, C, V> oldCell = table.get(row, column);
@@ -163,12 +166,12 @@ final class TableCollectors {
     }
   }
 
-  private static final class MutableCell<R, C, V> extends AbstractCell<R, C, V> {
+  private static final @Mutable class MutableCell<R extends @Immutable Object, C extends @Immutable Object, V> extends AbstractCell<R, C, V> {
     private final R row;
     private final C column;
     private V value;
 
-    MutableCell(R row, C column, V value) {
+      MutableCell(R row, C column, V value) {
       this.row = checkNotNull(row, "row");
       this.column = checkNotNull(column, "column");
       this.value = checkNotNull(value, "value");
@@ -196,9 +199,9 @@ final class TableCollectors {
   }
 
   private static <
-          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       void mergeTables(
-          Table<R, C, V> table,
+          @Mutable Table<R, C, V> table,
           @ParametricNullness R row,
           @ParametricNullness C column,
           @ParametricNullness V value,

@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -35,8 +36,8 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-abstract class ImmutableMapEntrySet<K, V> extends ImmutableSet.CachingAsList<Entry<K, V>> {
-  static final class RegularEntrySet<K, V> extends ImmutableMapEntrySet<K, V> {
+abstract class ImmutableMapEntrySet<K extends @Immutable Object, V> extends ImmutableSet.CachingAsList<Entry<K, V>> {
+  static final class RegularEntrySet<K extends @Immutable Object, V> extends ImmutableMapEntrySet<K, V> {
     private final transient ImmutableMap<K, V> map;
     private final transient ImmutableList<Entry<K, V>> entries;
 
@@ -123,7 +124,7 @@ abstract class ImmutableMapEntrySet<K, V> extends ImmutableSet.CachingAsList<Ent
   }
 
   @GwtIncompatible // serialization
-  private static class EntrySetSerializedForm<K, V> implements Serializable {
+  private static class EntrySetSerializedForm<K extends @Immutable Object, V> implements Serializable {
     final ImmutableMap<K, V> map;
 
     EntrySetSerializedForm(ImmutableMap<K, V> map) {

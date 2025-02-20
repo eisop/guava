@@ -26,6 +26,9 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -59,51 +62,51 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-public abstract class ForwardingSortedSet<E extends @Nullable Object> extends ForwardingSet<E>
+public @ReceiverDependentMutable abstract class ForwardingSortedSet<E extends @Nullable @Readonly Object> extends ForwardingSet<E>
     implements SortedSet<E> {
 
   /** Constructor for use by subclasses. */
-  protected ForwardingSortedSet() {}
+  protected @ReceiverDependentMutable ForwardingSortedSet() {}
 
   @Override
-  protected abstract SortedSet<E> delegate();
+  protected abstract @Mutable SortedSet<E> delegate(@Readonly ForwardingSortedSet<E> this);
 
   @SideEffectFree
   @Override
   @CheckForNull
-  public Comparator<? super E> comparator() {
+  public Comparator<? super E> comparator(@Readonly ForwardingSortedSet<E> this) {
     return delegate().comparator();
   }
 
   @SideEffectFree
   @Override
   @ParametricNullness
-  public E first() {
+  public E first(@Readonly ForwardingSortedSet<E> this) {
     return delegate().first();
   }
 
   @SideEffectFree
   @Override
-  public SortedSet<E> headSet(@ParametricNullness E toElement) {
+  public SortedSet<E> headSet(@Readonly ForwardingSortedSet<E> this, @ParametricNullness E toElement) {
     return delegate().headSet(toElement);
   }
 
   @SideEffectFree
   @Override
   @ParametricNullness
-  public E last() {
+  public E last(@Readonly ForwardingSortedSet<E> this) {
     return delegate().last();
   }
 
   @SideEffectFree
   @Override
-  public SortedSet<E> subSet(@ParametricNullness E fromElement, @ParametricNullness E toElement) {
+  public SortedSet<E> subSet(@Readonly ForwardingSortedSet<E> this, @ParametricNullness E fromElement, @ParametricNullness E toElement) {
     return delegate().subSet(fromElement, toElement);
   }
 
   @SideEffectFree
   @Override
-  public SortedSet<E> tailSet(@ParametricNullness E fromElement) {
+  public SortedSet<E> tailSet(@Readonly ForwardingSortedSet<E> this, @ParametricNullness E fromElement) {
     return delegate().tailSet(fromElement);
   }
 
@@ -116,7 +119,7 @@ public abstract class ForwardingSortedSet<E extends @Nullable Object> extends Fo
    */
   @Override
   @Beta
-  protected boolean standardContains(@CheckForNull Object object) {
+  protected boolean standardContains(@Readonly ForwardingSortedSet<E> this, @CheckForNull Object object) {
     try {
       // any ClassCastExceptions and NullPointerExceptions are caught
       @SuppressWarnings({"unchecked", "nullness"})
@@ -137,7 +140,7 @@ public abstract class ForwardingSortedSet<E extends @Nullable Object> extends Fo
    */
   @Override
   @Beta
-  protected boolean standardRemove(@CheckForNull Object object) {
+  protected boolean standardRemove(@Mutable ForwardingSortedSet<E> this, @CheckForNull Object object) {
     try {
       // any ClassCastExceptions and NullPointerExceptions are caught
       @SuppressWarnings({"unchecked", "nullness"})
@@ -164,7 +167,7 @@ public abstract class ForwardingSortedSet<E extends @Nullable Object> extends Fo
    * @since 7.0
    */
   @Beta
-  protected SortedSet<E> standardSubSet(
+  protected SortedSet<E> standardSubSet(@Readonly ForwardingSortedSet<E> this,
       @ParametricNullness E fromElement, @ParametricNullness E toElement) {
     return tailSet(fromElement).headSet(toElement);
   }

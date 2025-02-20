@@ -39,6 +39,8 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
@@ -58,10 +60,10 @@ import org.checkerframework.framework.qual.CFComment;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Object>
     extends ForwardingMap<K, V> implements BiMap<K, V>, Serializable {
 
-  private transient Map<K, V> delegate;
+  private transient @Mutable Map<K, V> delegate;
   @RetainedWith transient AbstractBiMap<V, K> inverse;
 
   /** Package-private constructor for creating a map-backed bimap. */
@@ -129,19 +131,19 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V put(@ParametricNullness K key, @ParametricNullness V value) {
+  public V put(@Mutable AbstractBiMap<K, V> this, @ParametricNullness K key, @ParametricNullness V value) {
     return putInBothMaps(key, value, false);
   }
 
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
+  public V forcePut(@Mutable AbstractBiMap<K, V> this, @ParametricNullness K key, @ParametricNullness V value) {
     return putInBothMaps(key, value, true);
   }
 
   @CheckForNull
-  private V putInBothMaps(@ParametricNullness K key, @ParametricNullness V value, boolean force) {
+  private V putInBothMaps(@Mutable AbstractBiMap<K, V> this, @ParametricNullness K key, @ParametricNullness V value, boolean force) {
     checkKey(key);
     checkValue(value);
     boolean containedKey = containsKey(key);
@@ -404,12 +406,12 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public void clear() {
+    public void clear(@Mutable EntrySet this) {
       AbstractBiMap.this.clear();
     }
 
     @Override
-    public boolean remove(@CheckForNull @UnknownSignedness Object object) {
+    public boolean remove(@Mutable EntrySet this,  @CheckForNull @UnknownSignedness Object object) {
       /*
        * `o instanceof Entry` is guaranteed by `contains`, but we check it here to satisfy our
        * nullness checker.
@@ -468,7 +470,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@Mutable EntrySet this, Collection<?> c) {
       return standardRemoveAll(c);
     }
 

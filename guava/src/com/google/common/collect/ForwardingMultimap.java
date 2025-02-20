@@ -24,6 +24,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -44,7 +46,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-public abstract class ForwardingMultimap<K extends @Nullable Object, V extends @Nullable Object>
+public abstract class ForwardingMultimap<K extends @Nullable @Immutable Object, V extends @Nullable @Readonly Object>
     extends ForwardingObject implements Multimap<K, V> {
 
   /** Constructor for use by subclasses. */

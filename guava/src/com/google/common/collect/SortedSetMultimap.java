@@ -26,6 +26,8 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 /**
@@ -52,7 +54,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @GwtCompatible
 @AnnotatedFor({"nullness"})
 @ElementTypesAreNonnullByDefault
-public interface SortedSetMultimap<K extends @Nullable Object, V extends @Nullable Object>
+public interface SortedSetMultimap<K extends @Nullable @Immutable Object, V extends @Nullable @Readonly Object>
     extends SetMultimap<K, V> {
   // Following Javadoc copied from Multimap.
 

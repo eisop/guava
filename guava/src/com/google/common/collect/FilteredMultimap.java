@@ -20,6 +20,8 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Predicate;
 import java.util.Map.Entry;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /**
  * An interface for all filtered multimap types.
@@ -28,7 +30,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-interface FilteredMultimap<K extends @Nullable Object, V extends @Nullable Object>
+interface FilteredMultimap<K extends @Nullable @Immutable Object, V extends @Nullable @Readonly Object>
     extends Multimap<K, V> {
   Multimap<K, V> unfiltered();
 

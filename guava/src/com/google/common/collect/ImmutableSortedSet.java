@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -435,7 +436,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSortedSetFauxveride
    *
    * @since 2.0
    */
-  public static final class Builder<E> extends ImmutableSet.Builder<E> {
+  public static final @Mutable class Builder<E> extends ImmutableSet.Builder<E> {
     private final Comparator<? super E> comparator;
     private E[] elements;
     private int n;
