@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Map;
 
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.framework.qual.CFComment;
+
 /**
  * An implementation of {@link ImmutableTable} that holds a single cell.
  *
@@ -28,7 +31,8 @@ import java.util.Map;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-class SingletonImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
+@CFComment("Value need to be immutable because it is later used for constructing a bimap")
+class SingletonImmutableTable<R extends @Immutable Object, C extends @Immutable Object, V extends @Immutable Object> extends ImmutableTable<R, C, V> {
   final R singleRowKey;
   final C singleColumnKey;
   final V singleValue;

@@ -33,6 +33,9 @@ import java.util.function.ObjIntConsumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -93,7 +96,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-public interface Multiset<E extends @Nullable Object> extends Collection<E> {
+public @ReceiverDependentMutable interface Multiset<E extends @Readonly @Nullable Object> extends Collection<E> {
   // Query Operations
 
   /**
@@ -118,7 +121,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    * @return the number of occurrences of the element in this multiset; possibly zero but never
    *     negative
    */
-  int count(@CompatibleWith("E") @CheckForNull Object element);
+  int count(@CompatibleWith("E") @CheckForNull @Readonly Object element);
 
   // Bulk Operations
 
@@ -141,7 +144,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    *     return normally.
    */
   @CanIgnoreReturnValue
-  int add(@ParametricNullness E element, int occurrences);
+  int add(@Mutable Multiset<E> this, @ParametricNullness E element, int occurrences);
 
   /**
    * Adds a single occurrence of the specified element to this multiset.
@@ -164,7 +167,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean add(@ParametricNullness E element);
+  boolean add(@Mutable Multiset<E> this, @ParametricNullness E element);
 
   /**
    * Removes a number of occurrences of the specified element from this multiset. If the multiset
@@ -179,7 +182,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    * @throws IllegalArgumentException if {@code occurrences} is negative
    */
   @CanIgnoreReturnValue
-  int remove(@CompatibleWith("E") @CheckForNull Object element, int occurrences);
+  int remove(@Mutable Multiset<E> this, @CompatibleWith("E") @CheckForNull @Readonly Object element, int occurrences);
 
   /**
    * Removes a <i>single</i> occurrence of the specified element from this multiset, if present.
@@ -195,7 +198,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean remove(@CheckForNull @UnknownSignedness Object element);
+  boolean remove(@Mutable Multiset<E> this, @CheckForNull @UnknownSignedness @Readonly Object element);
 
   /**
    * Adds or removes the necessary occurrences of an element such that the element attains the
@@ -211,7 +214,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    *     zero instead.
    */
   @CanIgnoreReturnValue
-  int setCount(@ParametricNullness E element, int count);
+  int setCount(@Mutable Multiset<E> this, @ParametricNullness E element, int count);
 
   /**
    * Conditionally sets the count of an element to a new value, as described in {@link
@@ -230,7 +233,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    *     implementor may optionally return {@code true} instead.
    */
   @CanIgnoreReturnValue
-  boolean setCount(@ParametricNullness E element, int oldCount, int newCount);
+  boolean setCount(@Mutable Multiset<E> this, @ParametricNullness E element, int oldCount, int newCount);
 
   // Views
 
@@ -248,7 +251,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    *
    * @return a view of the set of distinct elements in this multiset
    */
-  Set<E> elementSet();
+  @ReceiverDependentMutable Set<E> elementSet();
 
   /**
    * Returns a view of the contents of this multiset, grouped into {@code Multiset.Entry} instances,
@@ -266,7 +269,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    *
    * @return a set of entries representing the data of this multiset
    */
-  Set<Entry<E>> entrySet();
+  @ReceiverDependentMutable Set<Entry<E>> entrySet();
 
   /**
    * An unmodifiable element-count pair for a multiset. The {@link Multiset#entrySet} method returns
@@ -276,7 +279,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    *
    * @since 2.0
    */
-  interface Entry<E extends @Nullable Object> {
+  interface Entry<E extends @Readonly @Nullable Object> {
 
     /**
      * Returns the multiset element corresponding to this entry. Multiple calls to this method
@@ -313,7 +316,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
     @Pure
     @Override
     // TODO(kevinb): check this wrt TreeMultiset?
-    boolean equals(@CheckForNull Object o);
+    boolean equals(@CheckForNull @Readonly Object o);
 
     /**
      * {@inheritDoc}
@@ -364,7 +367,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
   @Pure
   @Override
   // TODO(kevinb): caveats about equivalence-relation?
-  boolean equals(@CheckForNull @UnknownSignedness Object object);
+  boolean equals(@CheckForNull @UnknownSignedness @Readonly Object object);
 
   /**
    * Returns the hash code for this multiset. This is defined as the sum of
@@ -378,7 +381,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @Pure
   @Override
-  int hashCode(@UnknownSignedness Multiset<E> this);
+  int hashCode(@UnknownSignedness @ReceiverDependentMutable Multiset<E> this);
 
   /**
    * {@inheritDoc}
@@ -400,7 +403,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    * iterator, though not necessarily sequentially.
    */
   @Override
-  Iterator<E> iterator();
+  @ReceiverDependentMutable Iterator<E> iterator();
 
   /**
    * Determines whether this multiset contains the specified element.
@@ -413,7 +416,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @Pure
   @Override
-  boolean contains(@CheckForNull @UnknownSignedness Object element);
+  boolean contains(@CheckForNull @UnknownSignedness @Readonly Object element);
 
   /**
    * Returns {@code true} if this multiset contains at least one occurrence of each element in the
@@ -434,7 +437,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @Pure
   @Override
-  boolean containsAll(Collection<?> elements);
+  boolean containsAll(@Readonly Collection<?> elements);
 
   /**
    * {@inheritDoc}
@@ -449,7 +452,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean removeAll(Collection<?> c);
+  boolean removeAll(@Mutable Multiset<E> this, Collection<?> c);
 
   /**
    * {@inheritDoc}
@@ -466,7 +469,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean retainAll(Collection<?> c);
+  boolean retainAll(@Mutable Multiset<E> this, Collection<?> c);
 
   /**
    * {@inheritDoc}
@@ -489,7 +492,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
   }
 
   @Override
-  default Spliterator<E> spliterator() {
+  default @ReceiverDependentMutable Spliterator<E> spliterator() {
     return Multisets.spliteratorImpl(this);
   }
 }

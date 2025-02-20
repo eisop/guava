@@ -44,6 +44,9 @@ import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -103,7 +106,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @ElementTypesAreNonnullByDefault
-public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable Object>
+public @ReceiverDependentMutable class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractMultimap<K, V> implements ListMultimap<K, V>, Serializable {
   /*
    * Order is maintained using a linked list containing all key-value pairs. In
@@ -223,6 +226,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
    */
   @CanIgnoreReturnValue
   private Node<K, V> addNode(
+      @Mutable LinkedListMultimap<K,V> this,
       @ParametricNullness K key,
       @ParametricNullness V value,
       @CheckForNull Node<K, V> nextSibling) {
@@ -280,7 +284,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
    * Removes the specified node from the linked list. This method is only intended to be used from
    * the {@code Iterator} classes. See also {@link LinkedListMultimap#removeAllNodes(Object)}.
    */
-  private void removeNode(Node<K, V> node) {
+  private void removeNode(@Mutable LinkedListMultimap<K,V> this, @Readonly Node<K, V> node) {
     if (node.previous != null) {
       node.previous.next = node.next;
     } else { // node was head
@@ -323,7 +327,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
   }
 
   /** Removes all nodes for the specified key. */
-  private void removeAllNodes(@ParametricNullness K key) {
+  private void removeAllNodes(@Mutable LinkedListMultimap<K,V> this, @ParametricNullness K key) {
     Iterators.clear(new ValueForKeyIterator(key));
   }
 
@@ -635,7 +639,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
    */
   @CanIgnoreReturnValue
   @Override
-  public boolean put(@ParametricNullness K key, @ParametricNullness V value) {
+  public boolean put(@Mutable LinkedListMultimap<K,V> this, @ParametricNullness K key, @ParametricNullness V value) {
     addNode(key, value, null);
     return true;
   }
@@ -652,7 +656,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
    */
   @CanIgnoreReturnValue
   @Override
-  public List<V> replaceValues(@ParametricNullness K key, Iterable<? extends V> values) {
+  public List<V> replaceValues(@Mutable LinkedListMultimap<K,V> this, @ParametricNullness K key, Iterable<? extends V> values) {
     List<V> oldValues = getCopy(key);
     ListIterator<V> keyValues = new ValueForKeyIterator(key);
     Iterator<? extends V> newValues = values.iterator();
@@ -688,7 +692,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
    */
   @CanIgnoreReturnValue
   @Override
-  public List<V> removeAll(@Nullable Object key) {
+  public List<V> removeAll(@Mutable LinkedListMultimap<K,V> this, @Nullable Object key) {
     /*
      * Safe because all we do is remove values for the key, not add them. (If we wanted to make sure
      * to call getCopy and removeAllNodes only with a true K, then we could check containsKey first.
@@ -702,7 +706,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
   }
 
   @Override
-  public void clear() {
+  public void clear(@Mutable LinkedListMultimap<K,V> this) {
     head = null;
     tail = null;
     keyToKeyList.clear();
@@ -912,7 +916,7 @@ public boolean containsEntry(@Nullable Object arg0, @Nullable Object arg1) { ret
 public boolean equals(@Nullable Object arg0) { return super.equals(arg0); }
 
 @Override
-public boolean remove(@Nullable Object arg0, @Nullable Object arg1) { return super.remove(arg0, arg1); }
+public boolean remove(@Mutable LinkedListMultimap<K,V> this, @Nullable @Readonly Object arg0, @Nullable @Readonly Object arg1) { return super.remove(arg0, arg1); }
 
 @Override
 public Map<K, Collection<V>> asMap() { return super.asMap(); }

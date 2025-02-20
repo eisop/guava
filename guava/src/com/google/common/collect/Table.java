@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -58,8 +61,8 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @DoNotMock("Use ImmutableTable, HashBasedTable, or another implementation")
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-public interface Table<
-    R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object> {
+public @ReceiverDependentMutable interface Table<
+    R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object> {
   // TODO(jlevy): Consider adding methods similar to ConcurrentMap methods.
 
   // Accessors
@@ -93,7 +96,7 @@ public interface Table<
    *
    * @param value value to search for
    */
-  boolean containsValue(@CompatibleWith("V") @CheckForNull @UnknownSignedness Object value);
+  boolean containsValue(@CompatibleWith("V") @CheckForNull @UnknownSignedness @Readonly Object value);
 
   /**
    * Returns the value corresponding to the given row and column keys, or {@code null} if no such
@@ -118,19 +121,19 @@ public interface Table<
    * cell views, as returned by {@link #cellSet}, are equal.
    */
   @Override
-  boolean equals(@CheckForNull Object obj);
+  boolean equals(@CheckForNull @Readonly Object obj);
 
   /**
    * Returns the hash code for this table. The hash code of a table is defined as the hash code of
    * its cell view, as returned by {@link #cellSet}.
    */
   @Override
-  int hashCode(@UnknownSignedness Table<R, C, V> this);
+  int hashCode(@UnknownSignedness @Readonly Table<R, C, V> this);
 
   // Mutators
 
   /** Removes all mappings from the table. */
-  void clear();
+  void clear(@Mutable Table<R, C, V> this);
 
   /**
    * Associates the specified value with the specified keys. If the table already contained a
@@ -144,7 +147,7 @@ public interface Table<
    */
   @CanIgnoreReturnValue
   @CheckForNull
-  V put(@ParametricNullness R rowKey, @ParametricNullness C columnKey, @ParametricNullness V value);
+  V put(@Mutable Table<R, C, V> this, @ParametricNullness R rowKey, @ParametricNullness C columnKey, @ParametricNullness V value);
 
   /**
    * Copies all mappings from the specified table to this table. The effect is equivalent to calling
@@ -152,7 +155,7 @@ public interface Table<
    *
    * @param table the table to add to this table
    */
-  void putAll(Table<? extends R, ? extends C, ? extends V> table);
+  void putAll(@Mutable Table<R, C, V> this, Table<? extends R, ? extends C, ? extends V> table);
 
   /**
    * Removes the mapping, if any, associated with the given keys.
@@ -163,7 +166,7 @@ public interface Table<
    */
   @CanIgnoreReturnValue
   @CheckForNull
-  V remove(
+  V remove(@Mutable Table<R, C, V> this,
       @CompatibleWith("R") @CheckForNull Object rowKey,
       @CompatibleWith("C") @CheckForNull Object columnKey);
 
@@ -257,8 +260,8 @@ public interface Table<
    *
    * @since 7.0
    */
-  interface Cell<
-      R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object> {
+  @ReceiverDependentMutable interface Cell<
+      R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object> {
     /** Returns the row key of this cell. */
     @ParametricNullness
     R getRowKey();

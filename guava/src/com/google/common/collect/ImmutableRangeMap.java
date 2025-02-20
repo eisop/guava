@@ -37,6 +37,7 @@ import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -109,7 +110,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
    * @since 14.0
    */
   @DoNotMock
-  public static final class Builder<K extends Comparable<?>, V> {
+  public static final @Mutable class Builder<K extends Comparable<?>, V> {
     private final List<Entry<Range<K>, V>> entries;
 
     public Builder() {

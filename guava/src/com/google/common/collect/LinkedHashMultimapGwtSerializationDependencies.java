@@ -19,6 +19,7 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Collection;
 import java.util.Map;
+import org.checkerframework.checker.pico.qual.Immutable;
 
 /**
  * A dummy superclass to support GWT serialization of the element types of a {@link
@@ -30,7 +31,7 @@ import java.util.Map;
  * <p>TODO(cpovirk): Consider applying this subclass approach to our other types.
  */
 @GwtCompatible(emulated = true)
-abstract class LinkedHashMultimapGwtSerializationDependencies<K, V>
+abstract class LinkedHashMultimapGwtSerializationDependencies<K extends @Immutable Object, V>
     extends AbstractSetMultimap<K, V> {
   LinkedHashMultimapGwtSerializationDependencies(Map<K, Collection<V>> map) {
     super(map);

@@ -17,16 +17,17 @@ package com.google.common.collect;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtCompatible;
-import com.google.errorprone.annotations.Immutable;
+//import com.google.errorprone.annotations.Immutable;
+import org.checkerframework.checker.pico.qual.Immutable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 /** A {@code RegularImmutableTable} optimized for sparse data. */
 @GwtCompatible
-@Immutable(containerOf = {"R", "C", "V"})
+//@Immutable(containerOf = {"R", "C", "V"})
 @ElementTypesAreNonnullByDefault
-final class SparseImmutableTable<R, C, V> extends RegularImmutableTable<R, C, V> {
+final class SparseImmutableTable<R extends @Immutable Object, C extends @Immutable Object, V> extends RegularImmutableTable<R, C, V> {
   static final ImmutableTable<Object, Object, Object> EMPTY =
       new SparseImmutableTable<>(
           ImmutableList.<Cell<Object, Object, Object>>of(), ImmutableSet.of(), ImmutableSet.of());

@@ -42,6 +42,8 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 import org.checkerframework.checker.signedness.qual.Signed;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
@@ -94,7 +96,7 @@ public final class Collections2 {
    */
   // TODO(kevinb): how can we omit that Iterables link when building gwt
   // javadoc?
-  public static <E extends @Nullable Object> Collection<E> filter(
+  public static <E extends @Nullable @Readonly Object> Collection<E> filter(
       Collection<E> unfiltered, Predicate<? super E> predicate) {
     if (unfiltered instanceof FilteredCollection) {
       // Support clear(), removeAll(), and retainAll() when filtering a filtered
@@ -122,7 +124,7 @@ public final class Collections2 {
    * Delegates to {@link Collection#remove}. Returns {@code false} if the {@code remove} method
    * throws a {@code ClassCastException} or {@code NullPointerException}.
    */
-  static boolean safeRemove(Collection<?> collection, @CheckForNull Object object) {
+  static boolean safeRemove(@Mutable Collection<?> collection, @CheckForNull Object object) {
     checkNotNull(collection);
     try {
       return collection.remove(object);
@@ -131,7 +133,7 @@ public final class Collections2 {
     }
   }
 
-  static class FilteredCollection<E extends @Nullable Object> extends AbstractCollection<E> {
+  static class FilteredCollection<E extends @Nullable @Readonly Object> extends AbstractCollection<E> {
     final Collection<E> unfiltered;
     final Predicate<? super E> predicate;
 
@@ -146,13 +148,13 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean add(@ParametricNullness E element) {
+    public boolean add(@Mutable FilteredCollection<E> this, @ParametricNullness E element) {
       checkArgument(predicate.apply(element));
       return unfiltered.add(element);
     }
 
     @Override
-    public boolean addAll(Collection<? extends E> collection) {
+    public boolean addAll(@Mutable FilteredCollection<E> this, Collection<? extends E> collection) {
       for (E element : collection) {
         checkArgument(predicate.apply(element));
       }
@@ -160,7 +162,7 @@ public final class Collections2 {
     }
 
     @Override
-    public void clear() {
+    public void clear(@Mutable FilteredCollection<E> this) {
       Iterables.removeIf(unfiltered, predicate);
     }
 
@@ -209,12 +211,12 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean remove(@CheckForNull @UnknownSignedness Object element) {
+    public boolean remove(@Mutable FilteredCollection<E> this, @CheckForNull @UnknownSignedness Object element) {
       return contains(element) && unfiltered.remove(element);
     }
 
     @Override
-    public boolean removeAll(final Collection<?> collection) {
+    public boolean removeAll(@Mutable FilteredCollection<E> this, final Collection<?> collection) {
       return removeIf(collection::contains);
     }
 
@@ -224,7 +226,7 @@ public final class Collections2 {
     }
 
     @Override
-    public boolean removeIf(java.util.function.Predicate<? super E> filter) {
+    public boolean removeIf(@Mutable FilteredCollection<E> this, java.util.function.Predicate<? super E> filter) {
       checkNotNull(filter);
       return unfiltered.removeIf(element -> predicate.apply(element) && filter.test(element));
     }
@@ -249,7 +251,7 @@ public final class Collections2 {
 
     @Override
     @SuppressWarnings("nullness:return")
-    public <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] array) {
+    public <T extends @Nullable @UnknownSignedness @Readonly Object> T[] toArray(@PolyNull T[] array) {
       return Lists.newArrayList(iterator()).toArray(array);
     }
 
@@ -277,12 +279,12 @@ public final class Collections2 {
    *
    * <p><b>{@code Stream} equivalent:</b> {@link java.util.stream.Stream#map Stream.map}.
    */
-  public static <F extends @Nullable Object, T extends @Nullable Object> Collection<T> transform(
+  public static <F extends @Nullable @Readonly Object, T extends @Nullable @Readonly Object> Collection<T> transform(
       Collection<F> fromCollection, Function<? super F, T> function) {
     return new TransformedCollection<>(fromCollection, function);
   }
 
-  static class TransformedCollection<F extends @Nullable Object, T extends @Nullable Object>
+  static class TransformedCollection<F extends @Nullable @Readonly Object, T extends @Nullable @Readonly Object>
       extends AbstractCollection<T> {
     final Collection<F> fromCollection;
     final Function<? super F, ? extends T> function;
@@ -343,7 +345,7 @@ public final class Collections2 {
    * @param self a collection which might contain all elements in {@code c}
    * @param c a collection whose elements might be contained by {@code self}
    */
-  static boolean containsAllImpl(Collection<?> self, Collection<?> c) {
+  static boolean containsAllImpl(@Readonly Collection<?> self, @Readonly Collection<?> c) {
     for (Object o : c) {
       if (!self.contains(o)) {
         return false;
@@ -353,7 +355,7 @@ public final class Collections2 {
   }
 
   /** An implementation of {@link Collection#toString()}. */
-  static String toStringImpl(final Collection<? extends @Signed Object> collection) {
+  static String toStringImpl(final @Readonly Collection<? extends @Signed @Readonly Object> collection) {
     StringBuilder sb = newStringBuilderForCollection(collection.size()).append('[');
     boolean first = true;
     for (Object o : collection) {

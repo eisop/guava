@@ -48,6 +48,10 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Assignable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -90,7 +94,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @Readonly @Nullable Object>
     extends AbstractMultimap<K, V> implements Serializable {
   /*
    * Here's an outline of the overall design.
@@ -111,8 +115,8 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
    * an entry for the provided key, and if so replaces the delegate.
    */
 
-  private transient Map<K, Collection<V>> map;
-  private transient int totalSize;
+  private transient @Assignable @Mutable Map<K, @Readonly Collection<V>> map;
+  private transient @Assignable int totalSize;
 
   /**
    * Creates a new multimap that uses the provided map.
@@ -120,13 +124,13 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
    * @param map place to store the mapping from each key to its corresponding values
    * @throws IllegalArgumentException if {@code map} is not empty
    */
-  protected AbstractMapBasedMultimap(Map<K, Collection<V>> map) {
+  protected AbstractMapBasedMultimap(Map<K, @Mutable Collection<V>> map) {
     checkArgument(map.isEmpty());
     this.map = map;
   }
 
   /** Used during deserialization only. */
-  final void setMap(Map<K, Collection<V>> map) {
+  final void setMap(Map<K, @Mutable Collection<V>> map) {
     this.map = map;
     totalSize = 0;
     for (Collection<V> values : map.values()) {
@@ -154,7 +158,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
    *
    * @return an empty collection of values
    */
-  abstract Collection<V> createCollection();
+  abstract @ReceiverDependentMutable Collection<V> createCollection();
 
   /**
    * Creates the collection of values for an explicitly provided key. By default, it simply calls
@@ -164,7 +168,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
    * @param key key to associate with values in the collection
    * @return an empty collection of values
    */
-  Collection<V> createCollection(@ParametricNullness K key) {
+  @ReceiverDependentMutable Collection<V> createCollection(@ParametricNullness K key) {
     return createCollection();
   }
 
@@ -187,7 +191,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
   // Modification Operations
 
   @Override
-  public boolean put(@ParametricNullness K key, @ParametricNullness V value) {
+  public boolean put(@Mutable AbstractMapBasedMultimap<K, V> this, @ParametricNullness K key, @ParametricNullness V value) {
     Collection<V> collection = map.get(key);
     if (collection == null) {
       collection = createCollection(key);
@@ -223,7 +227,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
    * <p>The returned collection is immutable.
    */
   @Override
-  public Collection<V> replaceValues(@ParametricNullness K key, Iterable<? extends V> values) {
+  public Collection<V> replaceValues(@Mutable AbstractMapBasedMultimap<K, V> this, @ParametricNullness K key, Iterable<? extends V> values) {
     Iterator<? extends V> iterator = values.iterator();
     if (!iterator.hasNext()) {
       return removeAll(key);
@@ -252,7 +256,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
    * <p>The returned collection is immutable.
    */
   @Override
-  public Collection<V> removeAll(@CheckForNull Object key) {
+  public Collection<V> removeAll(@Mutable AbstractMapBasedMultimap<K, V> this, @CheckForNull Object key) {
     Collection<V> collection = map.remove(key);
 
     if (collection == null) {
@@ -267,13 +271,13 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
     return unmodifiableCollectionSubclass(output);
   }
 
-  <E extends @Nullable Object> Collection<E> unmodifiableCollectionSubclass(
+  <E extends @Nullable @Readonly Object> Collection<E> unmodifiableCollectionSubclass(
       Collection<E> collection) {
     return Collections.unmodifiableCollection(collection);
   }
 
   @Override
-  public void clear() {
+  public void clear(@Mutable AbstractMapBasedMultimap<K, V> this) {
     // Clear each collection, to make previously returned collections empty.
     for (Collection<V> collection : map.values()) {
       collection.clear();
@@ -331,13 +335,13 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
   @WeakOuter
   class WrappedCollection extends AbstractCollection<V> {
     @ParametricNullness final K key;
-    Collection<V> delegate;
+    @Mutable Collection<V> delegate;
     @CheckForNull final WrappedCollection ancestor;
     @CheckForNull final Collection<V> ancestorDelegate;
 
     WrappedCollection(
         @ParametricNullness K key,
-        Collection<V> delegate,
+        @Mutable Collection<V> delegate,
         @CheckForNull WrappedCollection ancestor) {
       this.key = key;
       this.delegate = delegate;
@@ -424,7 +428,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
       return delegate.toString();
     }
 
-    Collection<V> getDelegate() {
+    @Mutable Collection<V> getDelegate() {
       return delegate;
     }
 
@@ -590,7 +594,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
     }
   }
 
-  private static <E extends @Nullable Object> Iterator<E> iteratorOrListIterator(
+  private static <E extends @Nullable @Readonly Object> Iterator<E> iteratorOrListIterator(
       Collection<E> collection) {
     return (collection instanceof List)
         ? ((List<E>) collection).listIterator()
@@ -1170,7 +1174,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
     }
   }
 
-  private abstract class Itr<T extends @Nullable Object> implements Iterator<T> {
+  private abstract class Itr<T extends @Nullable @Readonly Object> implements Iterator<T> {
     final Iterator<Entry<K, Collection<V>>> keyIterator;
     @CheckForNull K key;
     @CheckForNull Collection<V> collection;
@@ -1431,7 +1435,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
     }
 
     @WeakOuter
-    class AsMapEntries extends Maps.EntrySet<K, Collection<V>> {
+    @Mutable class AsMapEntries extends Maps.EntrySet<K, Collection<V>> {
       @Override
       Map<K, Collection<V>> map() {
         return AsMap.this;

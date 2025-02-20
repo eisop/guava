@@ -40,6 +40,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -149,7 +151,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-public abstract class Ordering<T extends @Nullable Object> implements Comparator<T> {
+public abstract class Ordering<T extends @Nullable @Readonly Object> implements Comparator<T> {
   // Natural order
 
   /**
@@ -183,7 +185,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *     wraps that comparator
    */
   @GwtCompatible(serializable = true)
-  public static <T extends @Nullable Object> Ordering<T> from(Comparator<T> comparator) {
+  public static <T extends @Nullable @Readonly Object> Ordering<T> from(Comparator<T> comparator) {
     return (comparator instanceof Ordering)
         ? (Ordering<T>) comparator
         : new ComparatorOrdering<T>(comparator);
@@ -196,7 +198,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   @GwtCompatible(serializable = true)
   @Deprecated
-  public static <T extends @Nullable Object> Ordering<T> from(Ordering<T> ordering) {
+  public static <T extends @Nullable @Readonly Object> Ordering<T> from(Ordering<T> ordering) {
     return checkNotNull(ordering);
   }
 
@@ -221,7 +223,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   // TODO(kevinb): provide replacement
   @GwtCompatible(serializable = true)
-  public static <T> Ordering<T> explicit(List<T> valuesInOrder) {
+  public static <T extends @Immutable Object> Ordering<T> explicit(List<T> valuesInOrder) {
     return new ExplicitOrdering<T>(valuesInOrder);
   }
 
@@ -454,7 +456,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
     return new ByFunctionOrdering<>(function, this);
   }
 
-  <T2 extends T> Ordering<Entry<T2, ?>> onKeys() {
+  <T2 extends @Immutable T> Ordering<Entry<T2, ?>> onKeys() {
     return onResultOf(Maps.<T2>keyFunction());
   }
 

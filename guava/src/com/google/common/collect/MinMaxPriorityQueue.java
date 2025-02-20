@@ -46,6 +46,7 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 
 /**
@@ -166,7 +167,7 @@ public final class MinMaxPriorityQueue<E> extends AbstractQueue<E> {
    * @since 8.0
    */
   @Beta
-  public static final class Builder<B> {
+  public static final @Mutable class Builder<B> {
     /*
      * TODO(kevinb): when the dust settles, see if we still need this or can
      * just default to DEFAULT_CAPACITY.

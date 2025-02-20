@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.NavigableSet;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 
 /**
  * This class provides a skeletal implementation of the {@link SortedMultiset} interface.
@@ -35,7 +37,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-abstract class AbstractSortedMultiset<E extends @Nullable Object> extends AbstractMultiset<E>
+@ReceiverDependentMutable abstract class AbstractSortedMultiset<E extends @Nullable @Readonly Object> extends AbstractMultiset<E>
     implements SortedMultiset<E> {
   @GwtTransient final Comparator<? super E> comparator;
 

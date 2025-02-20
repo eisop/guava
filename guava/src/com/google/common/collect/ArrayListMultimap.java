@@ -30,6 +30,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -64,7 +67,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @ElementTypesAreNonnullByDefault
-public final class ArrayListMultimap<K extends @Nullable Object, V extends @Nullable Object>
+public @ReceiverDependentMutable final class ArrayListMultimap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends ArrayListMultimapGwtSerializationDependencies<K, V> {
   // Default from ArrayList
   private static final int DEFAULT_VALUES_PER_KEY = 3;
@@ -77,9 +80,8 @@ public final class ArrayListMultimap<K extends @Nullable Object, V extends @Null
    * <p>This method will soon be deprecated in favor of {@code
    * MultimapBuilder.hashKeys().arrayListValues().build()}.
    */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
-      ArrayListMultimap<K, V> create() {
-    return new ArrayListMultimap<>();
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object> @Mutable ArrayListMultimap<K, V> create() {
+    return new @Mutable ArrayListMultimap<>();
   }
 
   /**
@@ -94,9 +96,9 @@ public final class ArrayListMultimap<K extends @Nullable Object, V extends @Null
    * @throws IllegalArgumentException if {@code expectedKeys} or {@code expectedValuesPerKey} is
    *     negative
    */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
-      ArrayListMultimap<K, V> create(int expectedKeys, int expectedValuesPerKey) {
-    return new ArrayListMultimap<>(expectedKeys, expectedValuesPerKey);
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
+  @Mutable ArrayListMultimap<K, V> create(int expectedKeys, int expectedValuesPerKey) {
+    return new @Mutable ArrayListMultimap<>(expectedKeys, expectedValuesPerKey);
   }
 
   /**
@@ -107,9 +109,9 @@ public final class ArrayListMultimap<K extends @Nullable Object, V extends @Null
    *
    * @param multimap the multimap whose contents are copied to this multimap
    */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
-      ArrayListMultimap<K, V> create(Multimap<? extends K, ? extends V> multimap) {
-    return new ArrayListMultimap<>(multimap);
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
+  @Mutable ArrayListMultimap<K, V> create(Multimap<? extends K, ? extends V> multimap) {
+    return new @Mutable ArrayListMultimap<>(multimap);
   }
 
   private ArrayListMultimap() {
@@ -122,7 +124,7 @@ public final class ArrayListMultimap<K extends @Nullable Object, V extends @Null
     this.expectedValuesPerKey = expectedValuesPerKey;
   }
 
-  private ArrayListMultimap(Multimap<? extends K, ? extends V> multimap) {
+  private ArrayListMultimap(@ReceiverDependentMutable Multimap<? extends K, ? extends V> multimap) {
     this(
         multimap.keySet().size(),
         (multimap instanceof ArrayListMultimap)
@@ -194,13 +196,13 @@ public boolean equals(@Nullable Object arg0) { return super.equals(arg0); }
 public boolean isEmpty() { return super.isEmpty(); }
 
 @Override
-public List<V> get(@Nullable K arg0) { return super.get(arg0); }
+public @ReceiverDependentMutable List<V> get(@Nullable K arg0) { return super.get(arg0); }
 
 @Override
-public boolean remove(@Nullable Object arg0, @Nullable Object arg1) { return super.remove(arg0, arg1); }
+public boolean remove(@Mutable ArrayListMultimap<K, V> this, @Nullable Object arg0, @Nullable Object arg1) { return super.remove(arg0, arg1); }
 
 @Override
-public List<V> removeAll(@Nullable Object arg0) { return super.removeAll(arg0); }
+public List<V> removeAll(@Mutable ArrayListMultimap<K, V> this, @Nullable Object arg0) { return super.removeAll(arg0); }
 
 @Pure
 @Override

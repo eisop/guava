@@ -26,6 +26,7 @@ import java.util.Spliterator;
 import java.util.function.BiConsumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -36,8 +37,8 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @GwtCompatible(serializable = true, emulated = true)
 @SuppressWarnings("serial") // we're overriding default serialization
 @ElementTypesAreNonnullByDefault
-final class ImmutableEnumMap<K extends Enum<K>, V> extends IteratorBasedImmutableMap<K, V> {
-  static <K extends Enum<K>, V> ImmutableMap<K, V> asImmutable(EnumMap<K, V> map) {
+final class ImmutableEnumMap<K extends Enum<K>, V extends @Immutable Object> extends IteratorBasedImmutableMap<K, V> {
+  static <K extends Enum<K>, V extends @Immutable Object> ImmutableMap<K, V> asImmutable(EnumMap<K, V> map) {
     switch (map.size()) {
       case 0:
         return ImmutableMap.of();

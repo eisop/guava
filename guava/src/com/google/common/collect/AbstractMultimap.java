@@ -34,6 +34,11 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
+import org.checkerframework.checker.pico.qual.Assignable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -46,7 +51,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable Object>
+abstract @ReceiverDependentMutable class AbstractMultimap<K extends @Nullable @Immutable Object, V extends @Nullable @Readonly Object>
     implements Multimap<K, V> {
   @Pure
   @Override
@@ -56,7 +61,7 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   @Pure
   @Override
-  public boolean containsValue(@CheckForNull @UnknownSignedness Object value) {
+  public boolean containsValue(@CheckForNull @UnknownSignedness @Readonly Object value) {
     for (Collection<V> collection : asMap().values()) {
       if (collection.contains(value)) {
         return true;
@@ -68,27 +73,27 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   @Pure
   @Override
-  public boolean containsEntry(@CheckForNull Object key, @CheckForNull Object value) {
+  public boolean containsEntry(@CheckForNull @Readonly Object key, @CheckForNull @Readonly Object value) {
     Collection<V> collection = asMap().get(key);
     return collection != null && collection.contains(value);
   }
 
   @CanIgnoreReturnValue
   @Override
-  public boolean remove(@CheckForNull Object key, @CheckForNull Object value) {
+  public boolean remove(@Mutable AbstractMultimap<K, V> this, @CheckForNull @Readonly Object key, @CheckForNull @Readonly Object value) {
     Collection<V> collection = asMap().get(key);
     return collection != null && collection.remove(value);
   }
 
   @CanIgnoreReturnValue
   @Override
-  public boolean put(@ParametricNullness K key, @ParametricNullness V value) {
+  public boolean put(@Mutable AbstractMultimap<K, V> this, @ParametricNullness K key, @ParametricNullness V value) {
     return get(key).add(value);
   }
 
   @CanIgnoreReturnValue
   @Override
-  public boolean putAll(@ParametricNullness K key, Iterable<? extends V> values) {
+  public boolean putAll(@Mutable AbstractMultimap<K, V> this, @ParametricNullness K key, Iterable<? extends V> values) {
     checkNotNull(values);
     // make sure we only call values.iterator() once
     // and we only call get(key) if values is nonempty
@@ -103,7 +108,7 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   @CanIgnoreReturnValue
   @Override
-  public boolean putAll(Multimap<? extends K, ? extends V> multimap) {
+  public boolean putAll(@Mutable AbstractMultimap<K, V> this, Multimap<? extends K, ? extends V> multimap) {
     boolean changed = false;
     for (Entry<? extends K, ? extends V> entry : multimap.entries()) {
       changed |= put(entry.getKey(), entry.getValue());
@@ -113,7 +118,7 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   @CanIgnoreReturnValue
   @Override
-  public Collection<V> replaceValues(@ParametricNullness K key, Iterable<? extends V> values) {
+  public Collection<V> replaceValues(@Mutable AbstractMultimap<K, V> this, @ParametricNullness K key, Iterable<? extends V> values) {
     checkNotNull(values);
     Collection<V> result = removeAll(key);
     putAll(key, values);
@@ -159,7 +164,7 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
     @Pure
     @Override
-    public boolean equals(@CheckForNull @UnknownSignedness Object obj) {
+    public boolean equals(@CheckForNull @UnknownSignedness @Readonly Object obj) {
       return Sets.equalsImpl(this, obj);
     }
   }
@@ -205,15 +210,15 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
   abstract Collection<V> createValues();
 
   @WeakOuter
-  class Values extends AbstractCollection<V> {
+  @ReceiverDependentMutable class Values extends AbstractCollection<V> {
     @Override
-    public Iterator<V> iterator() {
+    public @ReceiverDependentMutable Iterator<V> iterator() {
       return valueIterator();
     }
 
     @Pure
     @Override
-    public Spliterator<V> spliterator() {
+    public @ReceiverDependentMutable Spliterator<V> spliterator() {
       return valueSpliterator();
     }
 
@@ -229,7 +234,7 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
     }
 
     @Override
-    public void clear() {
+    public void clear(@Mutable Values this) {
       AbstractMultimap.this.clear();
     }
   }
@@ -242,15 +247,15 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
     return Spliterators.spliterator(valueIterator(), size(), 0);
   }
 
-  @LazyInit @CheckForNull private transient Map<K, Collection<V>> asMap;
+  @LazyInit @CheckForNull private transient @Assignable Map<K, Collection<V>> asMap;
 
   @Override
-  public Map<K, Collection<V>> asMap() {
+  public @ReceiverDependentMutable Map<K, Collection<V>> asMap() {
     Map<K, Collection<V>> result = asMap;
     return (result == null) ? asMap = createAsMap() : result;
   }
 
-  abstract Map<K, Collection<V>> createAsMap();
+  abstract @ReceiverDependentMutable Map<K, Collection<V>> createAsMap();
 
   // Comparison and hashing
 

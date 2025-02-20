@@ -39,6 +39,8 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -73,7 +75,7 @@ public final class Tables {
           T extends @Nullable Object,
           R extends @Nullable Object,
           C extends @Nullable Object,
-          V extends @Nullable Object,
+          V extends @Nullable @Readonly Object,
           I extends Table<R, C, V>>
       Collector<T, ?, I> toTable(
           java.util.function.Function<? super T, ? extends R> rowFunction,
@@ -101,7 +103,7 @@ public final class Tables {
           T extends @Nullable Object,
           R extends @Nullable Object,
           C extends @Nullable Object,
-          V extends @Nullable Object,
+          V extends @Nullable @Readonly Object,
           I extends Table<R, C, V>>
       Collector<T, ?, I> toTable(
           java.util.function.Function<? super T, ? extends R> rowFunction,
@@ -122,7 +124,7 @@ public final class Tables {
    * @param columnKey the column key to be associated with the returned cell
    * @param value the value to be associated with the returned cell
    */
-  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       Cell<R, C, V> immutableCell(
           @ParametricNullness R rowKey,
           @ParametricNullness C columnKey,
@@ -168,7 +170,7 @@ public final class Tables {
   }
 
   abstract static class AbstractCell<
-          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       implements Cell<R, C, V> {
     // needed for serialization
     AbstractCell() {}
@@ -210,7 +212,7 @@ public final class Tables {
    * columnKeySet().iterator()} doesn't. With a transposed {@link HashBasedTable}, it's the other
    * way around.
    */
-  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       Table<C, R, V> transpose(Table<R, C, V> table) {
     return (table instanceof TransposeTable)
         ? ((TransposeTable<R, C, V>) table).original
@@ -218,7 +220,7 @@ public final class Tables {
   }
 
   private static class TransposeTable<
-          C extends @Nullable Object, R extends @Nullable Object, V extends @Nullable Object>
+          C extends @Nullable Object, R extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends AbstractTable<C, R, V> {
     final Table<R, C, V> original;
 
@@ -378,7 +380,7 @@ public final class Tables {
    * @since 10.0
    */
   @Beta
-  public static <R, C, V> Table<R, C, V> newCustomTable(
+  public static <R extends @Immutable Object, C extends @Immutable Object, V> Table<R, C, V> newCustomTable(
       Map<R, Map<C, V>> backingMap, Supplier<? extends Map<C, V>> factory) {
     checkArgument(backingMap.isEmpty());
     checkNotNull(factory);
@@ -411,8 +413,8 @@ public final class Tables {
   public static <
           R extends @Nullable Object,
           C extends @Nullable Object,
-          V1 extends @Nullable Object,
-          V2 extends @Nullable Object>
+          V1 extends @Nullable @Readonly Object,
+          V2 extends @Nullable @Readonly Object>
       Table<R, C, V2> transformValues(
           Table<R, C, V1> fromTable, Function<? super V1, V2> function) {
     return new TransformedTable<>(fromTable, function);
@@ -421,8 +423,8 @@ public final class Tables {
   private static class TransformedTable<
           R extends @Nullable Object,
           C extends @Nullable Object,
-          V1 extends @Nullable Object,
-          V2 extends @Nullable Object>
+          V1 extends @Nullable @Readonly Object,
+          V2 extends @Nullable @Readonly Object>
       extends AbstractTable<R, C, V2> {
     final Table<R, C, V1> fromTable;
     final Function<? super V1, V2> function;
@@ -563,13 +565,13 @@ public final class Tables {
    *
    * @since 11.0
    */
-  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       Table<R, C, V> unmodifiableTable(Table<? extends R, ? extends C, ? extends V> table) {
     return new UnmodifiableTable<>(table);
   }
 
   private static class UnmodifiableTable<
-          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends ForwardingTable<R, C, V> implements Serializable {
     final Table<? extends R, ? extends C, ? extends V> delegate;
 
@@ -666,7 +668,7 @@ public final class Tables {
    * @since 11.0
    */
   @Beta
-  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+  public static <R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       RowSortedTable<R, C, V> unmodifiableRowSortedTable(
           RowSortedTable<R, ? extends C, ? extends V> table) {
     /*
@@ -678,7 +680,7 @@ public final class Tables {
   }
 
   static final class UnmodifiableRowSortedMap<
-          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
+          R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable @Readonly Object>
       extends UnmodifiableTable<R, C, V> implements RowSortedTable<R, C, V> {
 
     public UnmodifiableRowSortedMap(RowSortedTable<R, ? extends C, ? extends V> delegate) {
@@ -705,7 +707,7 @@ public final class Tables {
   }
 
   @SuppressWarnings("unchecked")
-  private static <K extends @Nullable Object, V extends @Nullable Object>
+  private static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       Function<Map<K, V>, Map<K, V>> unmodifiableWrapper() {
     return (Function) UNMODIFIABLE_WRAPPER;
   }

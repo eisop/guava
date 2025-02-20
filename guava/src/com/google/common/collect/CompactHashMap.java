@@ -55,6 +55,10 @@ import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.checkerframework.checker.pico.qual.Assignable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.PolySigned;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
@@ -86,7 +90,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtIncompatible // not worth using in GWT for now
 @ElementTypesAreNonnullByDefault
-class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable class CompactHashMap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends AbstractMap<K, V> implements Serializable {
   /*
    * TODO: Make this a drop-in replacement for j.u. versions, actually drop them in, and test the
@@ -97,9 +101,9 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
    */
 
   /** Creates an empty {@code CompactHashMap} instance. */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
-      CompactHashMap<K, V> create() {
-    return new CompactHashMap<>();
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
+  @Mutable CompactHashMap<K, V> create() {
+    return new @Mutable CompactHashMap<>();
   }
 
   /**
@@ -111,9 +115,9 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
    *     elements without resizing
    * @throws IllegalArgumentException if {@code expectedSize} is negative
    */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
-      CompactHashMap<K, V> createWithExpectedSize(int expectedSize) {
-    return new CompactHashMap<>(expectedSize);
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
+  @Mutable CompactHashMap<K, V> createWithExpectedSize(int expectedSize) {
+    return new @Mutable CompactHashMap<>(expectedSize);
   }
 
   private static final Object NOT_FOUND = new Object();
@@ -234,10 +238,10 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
    * its bottom {@value CompactHashing#HASH_TABLE_BITS_MAX_BITS} bits, with a modification count in
    * the remaining bits that is used to detect concurrent modification during iteration.
    */
-  private transient int metadata;
+  private transient @Assignable int metadata;
 
   /** The number of elements contained in the set. */
-  private transient int size;
+  private transient @Assignable int size;
 
   /** Constructs a new empty instance of {@code CompactHashMap}. */
   CompactHashMap() {
@@ -340,7 +344,7 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V put(@ParametricNullness K key, @ParametricNullness V value) {
+  public V put(@Mutable CompactHashMap<K, V> this, @ParametricNullness K key, @ParametricNullness V value) {
     if (needsAllocArrays()) {
       allocArrays();
     }
@@ -532,7 +536,7 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
   @SuppressWarnings("unchecked") // known to be a V
   @Override
   @CheckForNull
-  public V remove(@CheckForNull @UnknownSignedness Object key) {
+  public V remove(@Mutable CompactHashMap<K, V> this, @CheckForNull @UnknownSignedness Object key) {
     Map<K, V> delegate = delegateOrNull();
     if (delegate != null) {
       return delegate.remove(key);
@@ -571,7 +575,7 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
   /**
    * Moves the last entry in the entry array into {@code dstIndex}, and nulls out its old position.
    */
-  void moveLastEntry(int dstIndex, int mask) {
+  void moveLastEntry(@Mutable CompactHashMap<K, V> this, int dstIndex, int mask) {
     Object table = requireTable();
     int[] entries = requireEntries();
     @Nullable Object[] keys = requireKeys();
@@ -997,7 +1001,7 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
   }
 
   @WeakOuter
-  class ValuesView extends Maps.Values<K, V> {
+  @ReceiverDependentMutable class ValuesView extends Maps.Values<K, V> {
     ValuesView() {
       super(CompactHashMap.this);
     }
@@ -1044,7 +1048,7 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
 
     @Override
     @SuppressWarnings("nullness") // b/192354773 in our checker affects toArray declarations
-    public <T extends @Nullable @UnknownSignedness Object> T[] toArray(@PolyNull T[] a) {
+    public <T extends @Nullable @UnknownSignedness @Readonly Object> T[] toArray(@PolyNull T[] a) {
       if (needsAllocArrays()) {
         if (a.length > 0) {
           @Nullable Object[] unsoundlyCovariantArray = a;
@@ -1167,11 +1171,11 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
     return requireNonNull(entries);
   }
 
-  private @Nullable Object[] requireKeys() {
+  private @Nullable Object @ReceiverDependentMutable [] requireKeys() {
     return requireNonNull(keys);
   }
 
-  private @Nullable Object[] requireValues() {
+  private @Nullable Object @ReceiverDependentMutable [] requireValues() {
     return requireNonNull(values);
   }
 
@@ -1197,11 +1201,11 @@ class CompactHashMap<K extends @Nullable Object, V extends @Nullable Object>
     return requireEntries()[i];
   }
 
-  private void setKey(int i, K key) {
+  private void setKey(@Mutable CompactHashMap<K, V> this, int i, K key) {
     requireKeys()[i] = key;
   }
 
-  private void setValue(int i, V value) {
+  private void setValue(@Mutable CompactHashMap<K, V> this, int i, V value) {
     requireValues()[i] = value;
   }
 

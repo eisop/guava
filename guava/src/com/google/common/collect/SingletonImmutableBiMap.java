@@ -25,6 +25,7 @@ import com.google.j2objc.annotations.RetainedWith;
 import java.util.function.BiConsumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.Immutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -36,7 +37,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @GwtCompatible(serializable = true, emulated = true)
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
 @ElementTypesAreNonnullByDefault
-final class SingletonImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
+final class SingletonImmutableBiMap<K extends @Immutable Object, V extends @Immutable Object> extends ImmutableBiMap<K, V> {
 
   final transient K singleKey;
   final transient V singleValue;

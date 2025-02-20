@@ -44,6 +44,9 @@ import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Assignable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -144,7 +147,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
     checkArgument(
         others.length <= Integer.MAX_VALUE - 6, "the total number of elements must fit in an int");
     final int paramCount = 6;
-    Object[] elements = new Object[paramCount + others.length];
+    @Readonly Object @Mutable [] elements = new Object @Mutable [paramCount + others.length];
     elements[0] = e1;
     elements[1] = e2;
     elements[2] = e3;
@@ -170,7 +173,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
    *
    * @throws NullPointerException if any of the first {@code n} elements of {@code elements} is null
    */
-  private static <E> ImmutableSet<E> constructUnknownDuplication(int n, Object... elements) {
+  private static <E> ImmutableSet<E> constructUnknownDuplication(int n, @Readonly Object... elements) {
     // Guess the size is "halfway between" all duplicates and no duplicates, on a log scale.
     return construct(
         n,
@@ -194,7 +197,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
    *
    * @throws NullPointerException if any of the first {@code n} elements of {@code elements} is null
    */
-  private static <E> ImmutableSet<E> construct(int n, int expectedSize, Object... elements) {
+  private static <E> ImmutableSet<E> construct(int n, int expectedSize, @Readonly Object @Readonly ... elements) {
     switch (n) {
       case 0:
         return of();
@@ -345,7 +348,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
 
   @GwtCompatible
   abstract static class CachingAsList<E> extends ImmutableSet<E> {
-    @LazyInit @RetainedWith @CheckForNull private transient ImmutableList<E> asList;
+    @LazyInit @RetainedWith @CheckForNull private transient @Assignable ImmutableList<E> asList;
 
     @Override
     public ImmutableList<E> asList() {
@@ -475,13 +478,13 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
    *
    * @since 2.0
    */
-  public static class Builder<E> extends ImmutableCollection.Builder<E> {
+  public static @Mutable class Builder<E> extends ImmutableCollection.Builder<E> {
     /*
      * `impl` is null only for instances of the subclass, ImmutableSortedSet.Builder. That subclass
      * overrides all the methods that access it here. Thus, all the methods here can safely assume
      * that this field is non-null.
      */
-    @CheckForNull private SetBuilderImpl<E> impl;
+    @CheckForNull private @Mutable SetBuilderImpl<E> impl;
     boolean forceCopy;
 
     public Builder() {
@@ -583,7 +586,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
   }
 
   /** Swappable internal implementation of an ImmutableSet.Builder. */
-  private abstract static class SetBuilderImpl<E> {
+  private abstract static @Mutable class SetBuilderImpl<E> {
     // The first `distinct` elements are non-null.
     // Since we can never access null elements, we don't mark this nullable.
     E[] dedupedElements;
@@ -591,7 +594,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
 
     @SuppressWarnings("unchecked")
     SetBuilderImpl(int expectedCapacity) {
-      this.dedupedElements = (E[]) new Object[expectedCapacity];
+      this.dedupedElements = (E @Mutable []) new Object[expectedCapacity];
       this.distinct = 0;
     }
 
@@ -655,7 +658,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
     abstract ImmutableSet<E> build();
   }
 
-  private static final class EmptySetBuilderImpl<E> extends SetBuilderImpl<E> {
+  private static final @Mutable class EmptySetBuilderImpl<E> extends SetBuilderImpl<E> {
     private static final EmptySetBuilderImpl<Object> INSTANCE = new EmptySetBuilderImpl<>();
 
     @SuppressWarnings("unchecked")
@@ -724,9 +727,9 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
    * <p>This implementation attempts to detect hash flooding, and if it's identified, falls back to
    * JdkBackedSetBuilderImpl.
    */
-  private static final class RegularSetBuilderImpl<E> extends SetBuilderImpl<E> {
+  private static final @Mutable class RegularSetBuilderImpl<E> extends SetBuilderImpl<E> {
     // null until at least two elements are present
-    private @Nullable Object @Nullable [] hashTable;
+    private @Nullable @Readonly Object @Nullable [] hashTable;
     private int maxRunBeforeFallback;
     private int expandTableThreshold;
     private int hashCode;
@@ -821,7 +824,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
            * populated.
            */
           @SuppressWarnings("nullness")
-          Object[] elements =
+          @Readonly Object[] elements =
               (distinct == dedupedElements.length)
                   ? dedupedElements
                   : Arrays.copyOf(dedupedElements, distinct);
@@ -831,8 +834,8 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
     }
 
     /** Builds a new open-addressed hash table from the first n objects in elements. */
-    static @Nullable Object[] rebuildHashTable(int newTableSize, Object[] elements, int n) {
-      @Nullable Object[] hashTable = new @Nullable Object[newTableSize];
+    static @Nullable Object @Mutable [] rebuildHashTable(int newTableSize, Object[] elements, int n) {
+      @Nullable Object [] hashTable = new @Nullable Object @Mutable [newTableSize];
       int mask = hashTable.length - 1;
       for (int i = 0; i < n; i++) {
         // requireNonNull is safe because we ensure that the first n elements have been populated.
@@ -892,7 +895,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
      * <p>This method may return {@code true} even on truly random input, but {@code
      * ImmutableSetTest} tests that the probability of that is low.
      */
-    static boolean hashFloodingDetected(@Nullable Object[] hashTable) {
+    static boolean hashFloodingDetected(@Nullable Object @Mutable [] hashTable) {
       int maxRunBeforeFallback = maxRunBeforeFallback(hashTable.length);
       int mask = hashTable.length - 1;
 
@@ -943,8 +946,8 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
   /**
    * SetBuilderImpl version that uses a JDK HashSet, which has built in hash flooding protection.
    */
-  private static final class JdkBackedSetBuilderImpl<E> extends SetBuilderImpl<E> {
-    private final Set<Object> delegate;
+  private static final @Mutable class JdkBackedSetBuilderImpl<E> extends SetBuilderImpl<E> {
+    private final Set<@Readonly Object> delegate;
 
     JdkBackedSetBuilderImpl(SetBuilderImpl<E> toCopy) {
       super(toCopy); // initializes dedupedElements and distinct

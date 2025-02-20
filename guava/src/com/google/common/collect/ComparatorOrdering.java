@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.Comparator;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -31,7 +32,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true)
 @ElementTypesAreNonnullByDefault
-final class ComparatorOrdering<T extends @Nullable Object> extends Ordering<T>
+final class ComparatorOrdering<T extends @Readonly @Nullable Object> extends Ordering<T>
     implements Serializable {
   final Comparator<T> comparator;
 

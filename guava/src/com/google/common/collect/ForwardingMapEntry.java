@@ -24,6 +24,9 @@ import java.util.Map.Entry;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -53,7 +56,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-public abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @Nullable Object>
+public @ReceiverDependentMutable abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends ForwardingObject implements Map.Entry<K, V> {
   // TODO(lowasser): identify places where thread safety is actually lost
 
@@ -61,7 +64,7 @@ public abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @
   protected ForwardingMapEntry() {}
 
   @Override
-  protected abstract Entry<K, V> delegate();
+  protected abstract @ReceiverDependentMutable Entry<K, V> delegate();
 
   @Pure
   @Override
@@ -79,7 +82,7 @@ public abstract class ForwardingMapEntry<K extends @Nullable Object, V extends @
 
   @Override
   @ParametricNullness
-  public V setValue(@ParametricNullness V value) {
+  public V setValue(@Mutable ForwardingMapEntry<K, V> this, @ParametricNullness V value) {
     return delegate().setValue(value);
   }
 

@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import javax.annotation.CheckForNull;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -120,7 +121,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @GwtCompatible
 @SuppressWarnings("rawtypes")
 @ElementTypesAreNonnullByDefault
-public final class Range<C extends Comparable> extends RangeGwtSerializationDependencies
+public @ReceiverDependentMutable final class Range<C extends Comparable> extends RangeGwtSerializationDependencies
     implements Predicate<C>, Serializable {
 
   static class LowerBoundFn implements Function<Range, Cut> {

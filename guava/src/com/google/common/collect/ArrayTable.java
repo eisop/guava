@@ -41,6 +41,10 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -95,7 +99,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 @Beta
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
-public final class ArrayTable<R, C, V> extends AbstractTable<R, C, @Nullable V>
+public final @ReceiverDependentMutable class ArrayTable<R extends @Immutable Object, C extends @Immutable Object, V> extends AbstractTable<R, C, @Nullable V>
     implements Serializable {
 
   /**
@@ -107,9 +111,9 @@ public final class ArrayTable<R, C, V> extends AbstractTable<R, C, @Nullable V>
    * @throws IllegalArgumentException if {@code rowKeys} or {@code columnKeys} contains duplicates
    *     or if exactly one of {@code rowKeys} or {@code columnKeys} is empty.
    */
-  public static <R, C, V> ArrayTable<R, C, V> create(
+  public static <R extends @Immutable Object, C extends @Immutable Object, V> @Mutable ArrayTable<R, C, V> create(
       Iterable<? extends R> rowKeys, Iterable<? extends C> columnKeys) {
-    return new ArrayTable<>(rowKeys, columnKeys);
+    return new @Mutable ArrayTable<>(rowKeys, columnKeys);
   }
 
   /*
@@ -136,10 +140,10 @@ public final class ArrayTable<R, C, V> extends AbstractTable<R, C, @Nullable V>
    *
    * @throws NullPointerException if {@code table} has a null key
    */
-  public static <R, C, V> ArrayTable<R, C, V> create(Table<R, C, ? extends @Nullable V> table) {
+  public static <R extends @Immutable Object, C extends @Immutable Object, V> @Mutable ArrayTable<R, C, V> create(Table<R, C, ? extends @Nullable V> table) {
     return (table instanceof ArrayTable)
-        ? new ArrayTable<R, C, V>((ArrayTable<R, C, V>) table)
-        : new ArrayTable<R, C, V>(table);
+        ? new @Mutable ArrayTable<R, C, V>((ArrayTable<R, C, V>) table)
+        : new @Mutable ArrayTable<R, C, V>(table);
   }
 
   private final ImmutableList<R> rowList;
@@ -191,7 +195,7 @@ public final class ArrayTable<R, C, V> extends AbstractTable<R, C, @Nullable V>
     }
   }
 
-  private abstract static class ArrayMap<K, V extends @Nullable Object>
+  private @Mutable abstract static class ArrayMap<K extends @Immutable Object, V extends @Nullable @Readonly Object>
       extends IteratorBasedAbstractMap<K, V> {
     private final ImmutableMap<K, Integer> keyIndex;
 
@@ -769,7 +773,7 @@ public final class ArrayTable<R, C, V> extends AbstractTable<R, C, @Nullable V>
   }
 
   @WeakOuter
-  private class RowMap extends ArrayMap<R, Map<C, @Nullable V>> {
+  private @ReceiverDependentMutable class RowMap extends ArrayMap<R, Map<C, @Nullable V>> {
     private RowMap() {
       super(rowKeyToIndex);
     }
@@ -811,7 +815,7 @@ public final class ArrayTable<R, C, V> extends AbstractTable<R, C, @Nullable V>
   }
 
   @Override
-  Iterator<@Nullable V> valuesIterator() {
+  @ReceiverDependentMutable Iterator<@Nullable V> valuesIterator() {
     return new AbstractIndexedListIterator<@Nullable V>(size()) {
       @Override
       @CheckForNull

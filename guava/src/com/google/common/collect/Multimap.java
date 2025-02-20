@@ -30,6 +30,9 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -166,7 +169,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @GwtCompatible
 @AnnotatedFor({"nullness"})
 @ElementTypesAreNonnullByDefault
-public interface Multimap<K extends @Nullable Object, V extends @Nullable Object> {
+public @ReceiverDependentMutable interface Multimap<K extends @Nullable @Immutable Object, V extends @Nullable @Readonly Object> {
   // Query Operations
 
   /**
@@ -205,8 +208,8 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    */
   @Pure
   boolean containsEntry(
-      @CompatibleWith("K") @CheckForNull Object key,
-      @CompatibleWith("V") @CheckForNull Object value);
+      @CompatibleWith("K") @CheckForNull @Readonly Object key,
+      @CompatibleWith("V") @CheckForNull @Readonly Object value);
 
   // Modification Operations
 
@@ -273,7 +276,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    *     no effect on the multimap.
    */
   @CanIgnoreReturnValue
-  Collection<V> replaceValues(@ParametricNullness K key, Iterable<? extends V> values);
+  @ReceiverDependentMutable Collection<V> replaceValues(@ParametricNullness K key, Iterable<? extends V> values);
 
   /**
    * Removes all values associated with the key {@code key}.
@@ -285,7 +288,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    *     modifiable, but updating it will have no effect on the multimap.
    */
   @CanIgnoreReturnValue
-  Collection<V> removeAll(@CompatibleWith("K") @CheckForNull Object key);
+  @ReceiverDependentMutable Collection<V> removeAll(@CompatibleWith("K") @CheckForNull Object key);
 
   /** Removes all key-value pairs from the multimap, leaving it {@linkplain #isEmpty empty}. */
   void clear();
@@ -299,7 +302,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    *
    * <p>Changes to the returned collection will update the underlying multimap, and vice versa.
    */
-  Collection<V> get(@ParametricNullness K key);
+  @ReceiverDependentMutable Collection<V> get(@ParametricNullness K key);
 
   /**
    * Returns a view collection of all <i>distinct</i> keys contained in this multimap. Note that the
@@ -308,7 +311,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * <p>Changes to the returned set will update the underlying multimap, and vice versa. However,
    * <i>adding</i> to the returned set is not possible.
    */
-  Set<K> keySet();
+  @ReceiverDependentMutable Set<K> keySet();
 
   /**
    * Returns a view collection containing the key from each key-value pair in this multimap,
@@ -318,7 +321,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * <p>Changes to the returned multiset will update the underlying multimap, and vice versa.
    * However, <i>adding</i> to the returned collection is not possible.
    */
-  Multiset<K> keys();
+  @ReceiverDependentMutable Multiset<K> keys();
 
   /**
    * Returns a view collection containing the <i>value</i> from each key-value pair contained in
@@ -327,7 +330,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * <p>Changes to the returned collection will update the underlying multimap, and vice versa.
    * However, <i>adding</i> to the returned collection is not possible.
    */
-  Collection<V> values();
+  @ReceiverDependentMutable Collection<V> values();
 
   /**
    * Returns a view collection of all key-value pairs contained in this multimap, as {@link Entry}
@@ -336,7 +339,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * <p>Changes to the returned collection or the entries it contains will update the underlying
    * multimap, and vice versa. However, <i>adding</i> to the returned collection is not possible.
    */
-  Collection<Entry<K, V>> entries();
+  @ReceiverDependentMutable Collection<Entry<K, V>> entries();
 
   /**
    * Performs the given action for all key-value pairs contained in this multimap. If an ordering is
@@ -363,7 +366,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * underlying multimap, and vice versa. The map does not support {@code put} or {@code putAll},
    * nor do its entries support {@link Entry#setValue setValue}.
    */
-  Map<K, Collection<V>> asMap();
+  @ReceiverDependentMutable Map<K, Collection<V>> asMap();
 
   // Comparison and hashing
 

@@ -21,6 +21,7 @@ import com.google.common.annotations.GwtIncompatible;
 import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /**
  * An {@link ImmutableAsList} implementation specialized for when the delegate collection is already
@@ -40,7 +41,7 @@ class RegularImmutableAsList<E> extends ImmutableAsList<E> {
     this.delegateList = delegateList;
   }
 
-  RegularImmutableAsList(ImmutableCollection<E> delegate, Object[] array) {
+  RegularImmutableAsList(ImmutableCollection<E> delegate, Object @Readonly [] array) {
     this(delegate, ImmutableList.<E>asImmutableList(array));
   }
 

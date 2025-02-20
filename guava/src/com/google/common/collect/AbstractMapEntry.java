@@ -22,6 +22,9 @@ import java.util.Map.Entry;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -34,7 +37,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class AbstractMapEntry<K extends @Nullable Object, V extends @Nullable Object>
+@ReceiverDependentMutable abstract class AbstractMapEntry<K extends @Nullable Object, V extends @Readonly @Nullable Object>
     implements Entry<K, V> {
 
   @Pure
@@ -49,7 +52,7 @@ abstract class AbstractMapEntry<K extends @Nullable Object, V extends @Nullable 
 
   @Override
   @ParametricNullness
-  public V setValue(@ParametricNullness V value) {
+  public V setValue(@Mutable AbstractMapEntry<K, V> this, @ParametricNullness V value) {
     throw new UnsupportedOperationException();
   }
 

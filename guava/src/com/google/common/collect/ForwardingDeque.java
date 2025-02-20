@@ -22,6 +22,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /**
  * A deque which forwards all its method calls to another deque. Subclasses should override one or
@@ -42,7 +43,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
-public abstract class ForwardingDeque<E extends @Nullable Object> extends ForwardingQueue<E>
+public abstract class ForwardingDeque<E extends @Nullable @Readonly Object> extends ForwardingQueue<E>
     implements Deque<E> {
 
   /** Constructor for use by subclasses. */

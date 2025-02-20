@@ -21,6 +21,7 @@ import com.google.common.base.Predicate;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 
 /**
  * Implementation of {@link Multimaps#filterKeys(ListMultimap, Predicate)}.
@@ -29,7 +30,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-final class FilteredKeyListMultimap<K extends @Nullable Object, V extends @Nullable Object>
+final class FilteredKeyListMultimap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends FilteredKeyMultimap<K, V> implements ListMultimap<K, V> {
   FilteredKeyListMultimap(ListMultimap<K, V> unfiltered, Predicate<? super K> keyPredicate) {
     super(unfiltered, keyPredicate);

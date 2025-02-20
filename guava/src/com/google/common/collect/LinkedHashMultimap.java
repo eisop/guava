@@ -45,6 +45,8 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -90,11 +92,11 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true, emulated = true)
 @ElementTypesAreNonnullByDefault
-public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nullable Object>
+public @ReceiverDependentMutable final class LinkedHashMultimap<K extends @Nullable Object, V extends @Readonly @Nullable Object>
     extends LinkedHashMultimapGwtSerializationDependencies<K, V> {
 
   /** Creates a new, empty {@code LinkedHashMultimap} with the default initial capacities. */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       LinkedHashMultimap<K, V> create() {
     return new LinkedHashMultimap<>(DEFAULT_KEY_CAPACITY, DEFAULT_VALUE_SET_CAPACITY);
   }
@@ -108,7 +110,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
    * @throws IllegalArgumentException if {@code expectedKeys} or {@code expectedValuesPerKey} is
    *     negative
    */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       LinkedHashMultimap<K, V> create(int expectedKeys, int expectedValuesPerKey) {
     return new LinkedHashMultimap<>(
         Maps.capacity(expectedKeys), Maps.capacity(expectedValuesPerKey));
@@ -122,14 +124,14 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
    *
    * @param multimap the multimap whose contents are copied to this multimap
    */
-  public static <K extends @Nullable Object, V extends @Nullable Object>
+  public static <K extends @Nullable Object, V extends @Nullable @Readonly Object>
       LinkedHashMultimap<K, V> create(Multimap<? extends K, ? extends V> multimap) {
     LinkedHashMultimap<K, V> result = create(multimap.keySet().size(), DEFAULT_VALUE_SET_CAPACITY);
     result.putAll(multimap);
     return result;
   }
 
-  private interface ValueSetLink<K extends @Nullable Object, V extends @Nullable Object> {
+  private @ReceiverDependentMutable interface ValueSetLink<K extends @Nullable Object, V extends @Nullable @Readonly Object> {
     ValueSetLink<K, V> getPredecessorInValueSet();
 
     ValueSetLink<K, V> getSuccessorInValueSet();
@@ -139,24 +141,24 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     void setSuccessorInValueSet(ValueSetLink<K, V> entry);
   }
 
-  private static <K extends @Nullable Object, V extends @Nullable Object> void succeedsInValueSet(
+  private static <K extends @Nullable Object, V extends @Nullable @Readonly Object> void succeedsInValueSet(
       ValueSetLink<K, V> pred, ValueSetLink<K, V> succ) {
     pred.setSuccessorInValueSet(succ);
     succ.setPredecessorInValueSet(pred);
   }
 
-  private static <K extends @Nullable Object, V extends @Nullable Object> void succeedsInMultimap(
+  private static <K extends @Nullable Object, V extends @Nullable @Readonly Object> void succeedsInMultimap(
       ValueEntry<K, V> pred, ValueEntry<K, V> succ) {
     pred.setSuccessorInMultimap(succ);
     succ.setPredecessorInMultimap(pred);
   }
 
-  private static <K extends @Nullable Object, V extends @Nullable Object> void deleteFromValueSet(
+  private static <K extends @Nullable Object, V extends @Nullable @Readonly Object> void deleteFromValueSet(
       ValueSetLink<K, V> entry) {
     succeedsInValueSet(entry.getPredecessorInValueSet(), entry.getSuccessorInValueSet());
   }
 
-  private static <K extends @Nullable Object, V extends @Nullable Object> void deleteFromMultimap(
+  private static <K extends @Nullable Object, V extends @Nullable @Readonly Object> void deleteFromMultimap(
       ValueEntry<K, V> entry) {
     succeedsInMultimap(entry.getPredecessorInMultimap(), entry.getSuccessorInMultimap());
   }
@@ -168,7 +170,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
    * whole.
    */
   @VisibleForTesting
-  static final class ValueEntry<K extends @Nullable Object, V extends @Nullable Object>
+  static final class ValueEntry<K extends @Nullable Object, V extends @Readonly @Nullable Object>
       extends ImmutableEntry<K, V> implements ValueSetLink<K, V> {
     final int smearedValueHash;
 
@@ -215,7 +217,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     }
 
     @SuppressWarnings("nullness") // see the comment on the class fields, especially about newHeader
-    static <K extends @Nullable Object, V extends @Nullable Object> ValueEntry<K, V> newHeader() {
+    static <K extends @Nullable Object, V extends @Readonly @Nullable Object> ValueEntry<K, V> newHeader() {
       return new ValueEntry<>(null, null, 0, null);
     }
 

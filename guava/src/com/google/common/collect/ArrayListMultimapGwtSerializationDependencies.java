@@ -19,6 +19,8 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Collection;
 import java.util.Map;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 
 /**
  * A dummy superclass to support GWT serialization of the element types of an {@link
@@ -30,9 +32,9 @@ import java.util.Map;
  * <p>TODO(cpovirk): Consider applying this subclass approach to our other types.
  */
 @GwtCompatible(emulated = true)
-abstract class ArrayListMultimapGwtSerializationDependencies<K, V>
+@ReceiverDependentMutable abstract class ArrayListMultimapGwtSerializationDependencies<K extends @Immutable Object, V>
     extends AbstractListMultimap<K, V> {
-  ArrayListMultimapGwtSerializationDependencies(Map<K, Collection<V>> map) {
+  ArrayListMultimapGwtSerializationDependencies(@ReceiverDependentMutable Map<K, Collection<V>> map) {
     super(map);
   }
   // TODO(cpovirk): Maybe I should have just one shared superclass for AbstractMultimap itself?

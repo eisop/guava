@@ -20,6 +20,7 @@ import com.google.common.annotations.GwtCompatible;
 import java.io.Serializable;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.framework.qual.AnnotatedFor;
@@ -28,7 +29,7 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 @AnnotatedFor({"nullness"})
 @GwtCompatible(serializable = true)
 @ElementTypesAreNonnullByDefault
-final class NullsFirstOrdering<T extends @Nullable Object> extends Ordering<@Nullable T>
+final class NullsFirstOrdering<T extends @Nullable @Readonly Object> extends Ordering<@Nullable T>
     implements Serializable {
   final Ordering<? super T> ordering;
 

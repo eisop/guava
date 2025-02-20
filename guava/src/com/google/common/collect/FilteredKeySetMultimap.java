@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.pico.qual.Readonly;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -31,7 +32,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-final class FilteredKeySetMultimap<K extends @Nullable Object, V extends @Nullable Object>
+final class FilteredKeySetMultimap<K extends @Nullable Object, V extends @Nullable @Readonly Object>
     extends FilteredKeyMultimap<K, V> implements FilteredSetMultimap<K, V> {
 
   FilteredKeySetMultimap(SetMultimap<K, V> unfiltered, Predicate<? super K> keyPredicate) {

@@ -47,6 +47,9 @@ import java.util.Spliterators;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
+import org.checkerframework.checker.pico.qual.ReceiverDependentMutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -70,8 +73,8 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializable {
-  @GwtTransient final Map<R, Map<C, V>> backingMap;
+@ReceiverDependentMutable class StandardTable<R extends @Immutable Object, C extends @Immutable Object, V> extends AbstractTable<R, C, V> implements Serializable {
+  @GwtTransient final @Mutable Map<R, Map<C, V>> backingMap;
   @GwtTransient final Supplier<? extends Map<C, V>> factory;
 
   StandardTable(Map<R, Map<C, V>> backingMap, Supplier<? extends Map<C, V>> factory) {
@@ -132,7 +135,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   // Mutators
 
   @Override
-  public void clear() {
+  public void clear(@Mutable StandardTable<R, C, V> this) {
     backingMap.clear();
   }
 
@@ -148,7 +151,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V put(R rowKey, C columnKey, V value) {
+  public V put(@Mutable StandardTable<R, C, V> this, R rowKey, C columnKey, V value) {
     checkNotNull(rowKey);
     checkNotNull(columnKey);
     checkNotNull(value);
@@ -158,7 +161,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   @CanIgnoreReturnValue
   @Override
   @CheckForNull
-  public V remove(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+  public V remove(@Mutable StandardTable<R, C, V> this, @CheckForNull Object rowKey, @CheckForNull Object columnKey) {
     if ((rowKey == null) || (columnKey == null)) {
       return null;
     }
@@ -174,7 +177,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   }
 
   @CanIgnoreReturnValue
-  private Map<R, V> removeColumn(@CheckForNull Object column) {
+  private Map<R, V> removeColumn(@Mutable StandardTable<R, C, V> this, @CheckForNull Object column) {
     Map<R, V> output = new LinkedHashMap<>();
     Iterator<Entry<R, Map<C, V>>> iterator = backingMap.entrySet().iterator();
     while (iterator.hasNext()) {
@@ -196,7 +199,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   }
 
   /** Remove a row key / column key / value mapping, if present. */
-  private boolean removeMapping(
+  private boolean removeMapping(@Mutable StandardTable<R, C, V> this,
       @CheckForNull Object rowKey, @CheckForNull Object columnKey, @CheckForNull Object value) {
     if (containsMapping(rowKey, columnKey, value)) {
       remove(rowKey, columnKey);
@@ -212,7 +215,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
    * clear()} clears all table mappings.
    */
   @WeakOuter
-  private abstract class TableSet<T> extends ImprovedAbstractSet<T> {
+  private @ReceiverDependentMutable abstract class TableSet<T> extends ImprovedAbstractSet<T> {
     @Override
     public boolean isEmpty() {
       return backingMap.isEmpty();
@@ -243,7 +246,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
     return new CellIterator();
   }
 
-  private class CellIterator implements Iterator<Cell<R, C, V>> {
+  private @ReceiverDependentMutable class CellIterator implements Iterator<Cell<R, C, V>> {
     final Iterator<Entry<R, Map<C, V>>> rowIterator = backingMap.entrySet().iterator();
     @CheckForNull Entry<R, Map<C, V>> rowEntry;
     Iterator<Entry<C, V>> columnIterator = Iterators.emptyModifiableIterator();
@@ -316,7 +319,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
     return new Row(rowKey);
   }
 
-  class Row extends IteratorBasedAbstractMap<C, V> {
+  @ReceiverDependentMutable class Row extends IteratorBasedAbstractMap<C, V> {
     final R rowKey;
 
     Row(R rowKey) {
@@ -462,7 +465,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
     return new Column(columnKey);
   }
 
-  private class Column extends ViewCachingAbstractMap<R, V> {
+  private @ReceiverDependentMutable class Column extends ViewCachingAbstractMap<R, V> {
     final C columnKey;
 
     Column(C columnKey) {
@@ -821,7 +824,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   }
 
   @WeakOuter
-  class RowMap extends ViewCachingAbstractMap<R, Map<C, V>> {
+  @ReceiverDependentMutable class RowMap extends ViewCachingAbstractMap<R, Map<C, V>> {
     @Override
     public boolean containsKey(@CheckForNull @UnknownSignedness Object key) {
       return containsRow(key);
@@ -899,7 +902,7 @@ class StandardTable<R, C, V> extends AbstractTable<R, C, V> implements Serializa
   }
 
   @WeakOuter
-  private class ColumnMap extends ViewCachingAbstractMap<C, Map<R, V>> {
+  private @ReceiverDependentMutable class ColumnMap extends ViewCachingAbstractMap<C, Map<R, V>> {
     // The cast to C occurs only when the key is in the map, implying that it
     // has the correct type.
     @SuppressWarnings("unchecked")

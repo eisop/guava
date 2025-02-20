@@ -27,6 +27,8 @@ import java.util.Set;
 import javax.annotation.CheckForNull;
 
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.pico.qual.Immutable;
+import org.checkerframework.checker.pico.qual.Mutable;
 import org.checkerframework.checker.signedness.qual.UnknownSignedness;
 
 /**
@@ -36,7 +38,7 @@ import org.checkerframework.checker.signedness.qual.UnknownSignedness;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
+abstract class RegularImmutableTable<R extends @Immutable Object, C extends @Immutable Object, V> extends ImmutableTable<R, C, V> {
   RegularImmutableTable() {}
 
   abstract Cell<R, C, V> getCell(int iterationIndex);
@@ -99,7 +101,7 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
     }
   }
 
-  static <R, C, V> RegularImmutableTable<R, C, V> forCells(
+  static <R extends @Immutable Object, C extends @Immutable Object, V> RegularImmutableTable<R, C, V> forCells(
       List<Cell<R, C, V>> cells,
       @CheckForNull Comparator<? super R> rowComparator,
       @CheckForNull Comparator<? super C> columnComparator) {
@@ -130,16 +132,16 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
     return forCellsInternal(cells, rowComparator, columnComparator);
   }
 
-  static <R, C, V> RegularImmutableTable<R, C, V> forCells(Iterable<Cell<R, C, V>> cells) {
+  static <R extends @Immutable Object, C extends @Immutable Object, V> RegularImmutableTable<R, C, V> forCells(Iterable<Cell<R, C, V>> cells) {
     return forCellsInternal(cells, null, null);
   }
 
-  private static <R, C, V> RegularImmutableTable<R, C, V> forCellsInternal(
+  private static <R extends @Immutable Object, C extends @Immutable Object, V> RegularImmutableTable<R, C, V> forCellsInternal(
       Iterable<Cell<R, C, V>> cells,
       @CheckForNull Comparator<? super R> rowComparator,
       @CheckForNull Comparator<? super C> columnComparator) {
-    Set<R> rowSpaceBuilder = new LinkedHashSet<>();
-    Set<C> columnSpaceBuilder = new LinkedHashSet<>();
+    Set<R> rowSpaceBuilder = new @Mutable LinkedHashSet<>();
+    Set<C> columnSpaceBuilder = new @Mutable LinkedHashSet<>();
     ImmutableList<Cell<R, C, V>> cellList = ImmutableList.copyOf(cells);
     for (Cell<R, C, V> cell : cells) {
       rowSpaceBuilder.add(cell.getRowKey());
@@ -159,7 +161,7 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
   }
 
   /** A factory that chooses the most space-efficient representation of the table. */
-  static <R, C, V> RegularImmutableTable<R, C, V> forOrderedComponents(
+  static <R extends @Immutable Object, C extends @Immutable Object, V> RegularImmutableTable<R, C, V> forOrderedComponents(
       ImmutableList<Cell<R, C, V>> cellList,
       ImmutableSet<R> rowSpace,
       ImmutableSet<C> columnSpace) {

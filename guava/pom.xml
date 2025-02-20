@@ -160,7 +160,7 @@
               <!-- Default is supress all index checker warnings. -->
               <arg>-AsuppressWarnings=${checkerframework.suppress}</arg>
               <arg>-XDignore.symbol.file</arg>  <!-- suppress any warnings for using 'Unsafe' -->
-              <arg>-AuseDefaultsForUncheckedCode=source,bytecode</arg>
+              <arg>-AuseConservativeDefaultsForUncheckedCode=-source,-bytecode</arg>
               <arg>-AshowSuppressWarningsStrings</arg>
               <arg>-AwarnUnneededSuppressions</arg>
             </compilerArgs>
@@ -385,7 +385,7 @@
           <artifactId>checker-qual</artifactId>
           <version>0.0.0</version>
           <scope>system</scope>
-          <systemPath>${CHECKERFRAMEWORK}/checker/dist/checker-qual.jar</systemPath>
+          <systemPath>${CHECKERFRAMEWORK}/checker/dist/checker.jar</systemPath>
         </dependency>
         <dependency>
           <groupId>io.github.eisop</groupId>
