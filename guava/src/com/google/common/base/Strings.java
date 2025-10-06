@@ -27,7 +27,6 @@ import javax.annotation.CheckForNull;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.checkerframework.framework.qual.EnsuresQualifierIf;
 
 /**
  * Static utility methods pertaining to {@code String} or {@code CharSequence} instances.
